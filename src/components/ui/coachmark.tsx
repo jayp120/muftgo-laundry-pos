@@ -36,43 +36,43 @@ interface CoachmarkProps {
 
 const coachmarkSteps: CoachmarkStep[] = [
   {
-    title: 'Selamat Datang di MuftGo Laundry POS! 🎉',
-    description: 'Kami akan memandu Anda melalui fitur-fitur utama. Di beranda ada checklist "Mulai Cepat" yang memandu Anda menyiapkan toko langkah demi langkah. Mari kita mulai!',
+    title: 'Welcome to MuftGo Laundry POS! 🎉',
+    description: 'We\'ll walk you through the key features. The "Quick Start" checklist on the home screen helps you set up your store step by step. Let\'s get started!',
     icon: Home,
     iconColor: 'text-rose-500',
     iconBgColor: 'bg-rose-100'
   },
   {
-    title: 'Buat New Order',
-    description: 'Klik tombol "Buat Order" untuk membuat order laundry baru. Anda dapat menambahkan service, memilih customer, dan menghitung total pembayaran dengan mudah.',
+    title: 'Create New Order',
+    description: 'Tap "New Order" to create a fresh laundry order. You can add services, pick a customer and work out the total in seconds.',
     icon: Plus,
     iconColor: 'text-blue-500',
     iconBgColor: 'bg-blue-100'
   },
   {
-    title: 'Kelola Customer',
-    description: 'Gunakan menu "Customer" untuk menambah, mengedit, atau melihat daftar customer Anda. Data customer akan tersimpan untuk memudahkan pemesanan berikutnya.',
+    title: 'Manage Customers',
+    description: 'Use the "Customers" menu to add, edit or view your customers. Saved details make repeat orders much faster.',
     icon: Users,
     iconColor: 'text-green-500',
     iconBgColor: 'bg-green-100'
   },
   {
-    title: 'Lacak Order History',
-    description: 'Akses "Laporan" untuk melihat semua order, status pembayaran, dan riwayat transaksi. Anda juga dapat mencetak struk dan mengelola status order.',
+    title: 'Track Order History',
+    description: 'Open "History" to see every order, payment status and transaction history. You can also print receipts and update order status.',
     icon: ShoppingCart,
     iconColor: 'text-purple-500',
     iconBgColor: 'bg-purple-100'
   },
   {
-    title: 'Analisis Pendapatan',
-    description: 'Pantau pendapatan harian Anda di halaman beranda. Kartu pendapatan menampilkan total pemasukan hari ini dan perbandingan dengan hari sebelumnya.',
+    title: 'Track Your Revenue',
+    description: 'Keep an eye on daily earnings from the home screen. The revenue card shows today\'s total and how it compares with yesterday.',
     icon: BarChart3,
     iconColor: 'text-orange-500',
     iconBgColor: 'bg-orange-100'
   },
   {
-    title: 'Siap Memulai? 🚀',
-    description: 'Ikuti checklist "Mulai Cepat" di beranda untuk menyiapkan toko, atau langsung buat order pertama Anda sekarang.',
+    title: 'Ready to Begin? 🚀',
+    description: 'Follow the "Quick Start" checklist on the home screen to set up your store, or jump straight in and create your first order.',
     icon: Plus,
     iconColor: 'text-rose-500',
     iconBgColor: 'bg-rose-100'
@@ -126,7 +126,7 @@ export const Coachmark: React.FC<CoachmarkProps> = ({ open, onClose, onStart }) 
                 <step.icon className={`h-6 w-6 ${step.iconColor}`} />
               </div>
               <span className="text-sm text-gray-500">
-                {currentStep + 1} dari {coachmarkSteps.length}
+                {currentStep + 1} of {coachmarkSteps.length}
               </span>
             </div>
           </div>
@@ -173,7 +173,7 @@ export const Coachmark: React.FC<CoachmarkProps> = ({ open, onClose, onStart }) 
                 className="flex-1"
               >
                 <X className="h-4 w-4 mr-1" />
-                Lewati
+                Skip
               </Button>
             )}
             <Button
@@ -182,7 +182,7 @@ export const Coachmark: React.FC<CoachmarkProps> = ({ open, onClose, onStart }) 
               className="flex-1 bg-rose-500 hover:bg-rose-600"
             >
               {isLastStep && <Plus className="h-4 w-4 mr-1" />}
-              {isLastStep ? 'Buat Order Pertama' : 'Lanjut'}
+              {isLastStep ? 'Create First Order' : 'Next'}
               {!isLastStep && <ChevronRight className="h-4 w-4 ml-1" />}
             </Button>
           </div>

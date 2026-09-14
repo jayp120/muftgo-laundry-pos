@@ -1,14 +1,9 @@
--- Auto-seed default services whenever a store is created.
+-- English (India) default services with INR pricing for new stores.
 --
--- Why: A brand-new store starts with zero services, which hard-blocks the POS
--- (the order screen shows "No services configured yet" and the owner
--- must manually go set up services before they can create their first order).
--- Seeding 3 ready-to-use services removes that activation wall so the POS works
--- immediately after signup. Owners can edit/delete these later.
---
--- This updates the create_store(user_id, ...) overload used by the app
--- (authService.createStoreForUser / createStore) to insert default services in
--- the same transaction as the store.
+-- Why: create_store() previously seeded Indonesian names/descriptions
+-- (Cuci Setrika Regular, etc.) with IDR-era prices. New stores must start
+-- with English names and round INR prices matching DEFAULT_SERVICES in
+-- src/hooks/useServices.ts. Existing stores are untouched.
 
 CREATE OR REPLACE FUNCTION public.create_store(
   user_id UUID,
@@ -48,13 +43,13 @@ BEGIN
   INSERT INTO public.services
     (store_id, name, description, category, unit_price, kilo_price, supports_unit, supports_kilo, duration_value, duration_unit, is_active)
   VALUES
-    (new_store_id, 'Cuci Setrika Regular', 'Cuci - Pengeringan - Setrika - Packing', 'wash', 18000, 6000, true, true, 2, 'days', true),
-    (new_store_id, 'Express Wash', 'Pencucian cepat dalam 24 jam', 'wash', 25000, 8000, true, true, 1, 'days', true),
-    (new_store_id, 'Setrika Saja', 'Layanan setrika dan pressing saja', 'ironing', 5000, 3000, true, true, 4, 'hours', true);
+    (new_store_id, 'Wash & Iron Regular', 'Wash - Dry - Iron - Pack', 'wash', 100, 60, true, true, 2, 'days', true),
+    (new_store_id, 'Express Wash', 'Quick wash within 24 hours', 'wash', 150, 90, true, true, 1, 'days', true),
+    (new_store_id, 'Ironing Only', 'Ironing and pressing only', 'ironing', 30, 20, true, true, 4, 'hours', true);
 
   RETURN new_store_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON FUNCTION public.create_store(UUID, TEXT, TEXT, TEXT, TEXT, TEXT) IS
-  'Creates a store for a laundry_owner and seeds 3 default services so the POS is usable immediately after signup.';
+  'Creates a store for a laundry_owner and seeds 3 default services (English, INR) so the POS is usable immediately after signup.';

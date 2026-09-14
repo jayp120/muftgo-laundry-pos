@@ -28,8 +28,8 @@ if (Capacitor.isNativePlatform()) {
   });
 }
 
-// Register service worker for PWA functionality
-if ('serviceWorker' in navigator) {
+// Register service worker for PWA functionality (web only - skip inside native APK WebView)
+if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js', {
       scope: '/'

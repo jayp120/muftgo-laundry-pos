@@ -58,8 +58,8 @@ export const CustomerPointsCard: React.FC<CustomerPointsCardProps> = ({
         <CardContent>
           <div className="text-center py-6 text-gray-500">
             <Star className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">Belum ada points</p>
-            <p className="text-xs mt-1">Points akan diberikan setelah pembayaran lunas</p>
+            <p className="text-sm">No points yet</p>
+            <p className="text-xs mt-1">Points are awarded once the bill is fully paid</p>
           </div>
         </CardContent>
       </Card>
@@ -80,7 +80,7 @@ export const CustomerPointsCard: React.FC<CustomerPointsCardProps> = ({
         </div>
         {points.accumulated_points > pointsts.current_points && (
           <div className="text-right">
-            <p className="text-xs text-gray-500">Total Terkumpul</p>
+            <p className="text-xs text-gray-500">Total Earned</p>
             <p className="text-sm font-semibold text-gray-700">{points.accumulated_points}</p>
           </div>
         )}
@@ -106,37 +106,37 @@ export const CustomerPointsCard: React.FC<CustomerPointsCardProps> = ({
               <p className="text-sm font-medium opacity-90">Points Available</p>
             </div>
             <p className="text-3xl font-bold">{points.current_points}</p>
-            <p className="text-xs opacity-75 mt-1">Dapat digunakan</p>
+            <p className="text-xs opacity-75 mt-1">Ready to use</p>
           </div>
 
           {/* Accumulated Points */}
           <div className="bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg p-4 text-white">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-5 w-5" />
-              <p className="text-sm font-medium opacity-90">Total Terkumpul</p>
+              <p className="text-sm font-medium opacity-90">Total Earned</p>
             </div>
             <p className="text-3xl font-bold">{points.accumulated_points}</p>
-            <p className="text-xs opacity-75 mt-1">Sepanjang masa</p>
+            <p className="text-xs opacity-75 mt-1">Lifetime</p>
           </div>
 
           {/* Redeemed Points */}
           <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg p-4 text-white">
             <div className="flex items-center gap-2 mb-2">
               <Star className="h-5 w-5 fill-white" />
-              <p className="text-sm font-medium opacity-90">Telah Ditukar</p>
+              <p className="text-sm font-medium opacity-90">Redeemed</p>
             </div>
             <p className="text-3xl font-bold">{redeemed}</p>
-            <p className="text-xs opacity-75 mt-1">Points terpakai</p>
+            <p className="text-xs opacity-75 mt-1">Points used</p>
           </div>
         </div>
 
         {/* Points Info */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-800 font-medium">💡 Cara Mendapat Poin</p>
+          <p className="text-sm text-blue-800 font-medium">💡 How to Earn Points</p>
           <ul className="text-xs text-blue-700 mt-2 space-y-1 ml-4 list-disc">
-            <li>1 points per kilogram untuk service kiloan</li>
-            <li>1 points per unit untuk service satuan</li>
-            <li>Points otomatis diberikan saat pembayaran lunas</li>
+            <li>1 point per kg for weight-based services</li>
+            <li>1 point per item for per-item services</li>
+            <li>Points are added automatically once payment is complete</li>
           </ul>
         </div>
 
@@ -145,7 +145,7 @@ export const CustomerPointsCard: React.FC<CustomerPointsCardProps> = ({
           <div className="border-t pt-4">
             <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              Riwayat Terakhir
+              Recent History
             </h4>
             <div className="space-y-2">
               {transactions.map((transaction) => (
@@ -165,7 +165,7 @@ export const CustomerPointsCard: React.FC<CustomerPointsCardProps> = ({
                     )}
                     <div>
                       <p className="text-sm font-medium">
-                        {transaction.transaction_type === 'earning' ? 'Dapat Poin' : 'Tukar Poin'}
+                        {transaction.transaction_type === 'earning' ? 'Points Earned' : 'Points Redeemed'}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(transaction.transaction_date).toLocaleDateString('en-IN', {

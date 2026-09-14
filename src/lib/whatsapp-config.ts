@@ -15,7 +15,7 @@ export const whatsAppConfig: WhatsAppConfig = {
   // deployed site's absolute URL) to reach the same serverless function remotely.
   baseUrl: import.meta.env.DEV && import.meta.env.VITE_WHATSAPP_USE_PROXY === 'true'
     ? 'http://localhost:8080/api/whatsapp'  // Vite proxy endpoint
-    : `${import.meta.env.VITE_APP_ORIGIN || ''}/api/whatsapp-send`,  // Vercel serverless function
+    : `${import.meta.env.VITE_APP_ORIGIN || 'https://muftgo.com'}/api/whatsapp-send`,  // Vercel serverless function
   // NOTE: In production, credentials are NOT exposed to client
   // They are handled securely in the serverless function
   username: import.meta.env.DEV ? (import.meta.env.VITE_WHATSAPP_API_USERNAME || 'admin') : '',

@@ -44,11 +44,11 @@ export interface ServiceFormData {
 // (supabase/migrations/20260621000000_seed_default_services_on_store_create.sql).
 export const DEFAULT_SERVICES: ServiceFormData[] = [
   {
-    name: 'Cuci Setrika Regular',
-    description: 'Cuci - Pengeringan - Setrika - Packing',
+    name: 'Wash & Iron Regular',
+    description: 'Wash - Dry - Iron - Pack',
     category: 'wash',
-    unit_price: 18000,
-    kilo_price: 6000,
+    unit_price: 100,
+    kilo_price: 60,
     supports_unit: true,
     supports_kilo: true,
     duration_value: 2,
@@ -56,21 +56,21 @@ export const DEFAULT_SERVICES: ServiceFormData[] = [
   },
   {
     name: 'Express Wash',
-    description: 'Pencucian cepat dalam 24 jam',
+    description: 'Quick wash within 24 hours',
     category: 'wash',
-    unit_price: 25000,
-    kilo_price: 8000,
+    unit_price: 150,
+    kilo_price: 90,
     supports_unit: true,
     supports_kilo: true,
     duration_value: 1,
     duration_unit: 'days',
   },
   {
-    name: 'Setrika Saja',
-    description: 'Service setrika dan pressing saja',
+    name: 'Ironing Only',
+    description: 'Ironing and pressing only',
     category: 'ironing',
-    unit_price: 5000,
-    kilo_price: 3000,
+    unit_price: 30,
+    kilo_price: 20,
     supports_unit: true,
     supports_kilo: true,
     duration_value: 4,
@@ -236,14 +236,14 @@ export const useSeedDefaultServices = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
       toast({
-        title: 'Berhasil',
-        description: 'Contoh service berhasil dibuat',
+        title: 'Success',
+        description: 'Sample services created successfully',
       });
     },
     onError: () => {
       toast({
         title: 'Error',
-        description: 'Gagal memuat contoh service',
+        description: 'Failed to load sample services',
         variant: 'destructive',
       });
     },

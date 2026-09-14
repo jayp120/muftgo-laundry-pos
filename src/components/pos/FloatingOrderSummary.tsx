@@ -240,7 +240,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <span className="font-semibold text-foreground text-sm sm:text-base">Order Saat Ini</span>
+              <span className="font-semibold text-foreground text-sm sm:text-base">Current Order</span>
               <Badge
                 variant="secondary"
                 className={`text-xs sm:text-sm transition-colors ${
@@ -258,7 +258,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                 onOpenServicePopup?.();
               }}
               className="h-7 w-7 p-0 text-muted-foreground hover:bg-muted flex-shrink-0"
-              title="Sembunyikan untuk menambah service lain"
+              title="Hide to add more services"
             >
               <ChevronDown className="h-4 w-4" />
             </Button>
@@ -269,20 +269,20 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
             <div className="mb-2 sm:mb-3 p-2 bg-pos-highlight/20 border border-pos-highlight/60 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                <span className="text-xs sm:text-sm font-medium text-primary">Estimasi Completed</span>
+                <span className="text-xs sm:text-sm font-medium text-primary">Estimated Ready By</span>
               </div>
               <p className="text-xs sm:text-sm text-primary/90 font-semibold">
                 {formatDate(completionTime)}
               </p>
               <p className="text-xs text-primary/70">
-                Diterima: {formatDate(dropOffDate)}
+                Received: {formatDate(dropOffDate)}
               </p>
             </div>
           )}
 
           {/* Order Items List */}
           <div className="mb-2 sm:mb-3">
-            <h4 className="text-sm font-medium text-foreground mb-1 sm:mb-2">Item Order</h4>
+            <h4 className="text-sm font-medium text-foreground mb-1 sm:mb-2">Order Items</h4>
             <div className="space-y-1 sm:space-y-2 max-h-40 overflow-y-auto">
               {currentOrder.map((item, index) => (
                 <div key={`${item.service.id}-${item.serviceType}-${index}`} className="flex items-center justify-between p-1.5 sm:p-2 bg-muted/50 rounded-lg">
@@ -292,7 +292,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                       ₹{item.service.price.toLocaleString('en-IN')} × {item.serviceType === 'kilo' ? `${item.quantity.toFixed(1)} kg` : `${item.quantity} unit${item.quantity !== 1 ? 's' : ''}`}
                     </p>
                     <p className="text-xs text-pos-success">
-                      Siap: {formatDate(calculateFinishDate(item.service, dropOffDate))}
+                      Ready: {formatDate(calculateFinishDate(item.service, dropOffDate))}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
@@ -374,12 +374,12 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                       ₹{item.price.toLocaleString('en-IN')} × {item.unitType === 'kilo' ? `${item.quantity.toFixed(1)} kg` : `${item.quantity} unit${item.quantity !== 1 ? 's' : ''}`}
                     </p>
                     <p className="text-xs text-pos-success">
-                      Siap: {calculateDynamicItemFinishDate ? formatDate(calculateDynamicItemFinishDate(item, dropOffDate)) : '-'}
+                      Ready: {calculateDynamicItemFinishDate ? formatDate(calculateDynamicItemFinishDate(item, dropOffDate)) : '-'}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
                     <Badge variant="outline" className="text-xs bg-accent/20 text-accent-foreground border-accent/40">
-                      Kustom
+                      Custom
                     </Badge>
                     <Button
                       variant="ghost"
@@ -404,12 +404,12 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           {/* Discount Section */}
           {currentStore?.enable_points && (
             <div className="space-y-2 mb-3">
-              <Label className="text-xs sm:text-sm font-medium">Discount (Opsional)</Label>
+              <Label className="text-xs sm:text-sm font-medium">Discount (Optional)</Label>
               <Tabs value={discountType} onValueChange={(v) => handleDiscountTypeChange(v as 'custom' | 'points')}>
                 <TabsList className="grid w-full grid-cols-2 h-8">
                   <TabsTrigger value="custom" className="flex items-center gap-1 text-xs">
                     <Percent className="h-3 w-3" />
-                    Kustom
+                    Custom
                   </TabsTrigger>
                   <TabsTrigger value="points" className="flex items-center gap-1 text-xs" disabled={!hasPoints || !isOnline}>
                     <Gift className="h-3 w-3" />
@@ -417,40 +417,40 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                   </TabsTrigger>
                 </TabsList>
                 {!isOnline && (
-                  <p className="mt-1 text-xs text-muted-foreground">Penukaran points tidak tersedia saat offline</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Points redemption is unavailable offline</p>
                 )}
                 <TabsContent value="custom" className="space-y-1 mt-2">
                   <Input
                     type="number"
                     value={customDiscount}
                     onChange={(e) => handleCustomDiscountChange(e.target.value)}
-                    placeholder="Enter diskon (Rp)"
+                    placeholder="Enter discount (₹)"
                     className="text-center h-8 text-sm"
                     min={0}
                     max={subtotal}
                   />
                   {discountError && (
-                    <p className="text-xs text-destructive">Discount tidak boleh melebihi total pembayaran</p>
+                    <p className="text-xs text-destructive">Discount cannot exceed the total amount</p>
                   )}
                 </TabsContent>
                 <TabsContent value="points" className="space-y-1 mt-2">
                   {hasPoints ? (
                     <>
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span>Points tersedia: {pointsAvailable}</span>
-                        <span>1 points = Rp100</span>
+                        <span>Points available: {pointsAvailable}</span>
+                        <span>1 point = ₹100</span>
                       </div>
                       <Input
                         type="number"
                         value={pointsToRedeem}
                         onChange={(e) => handlePointsToRedeemChange(e.target.value)}
-                        placeholder="Enter jumlah points"
+                        placeholder="Enter points to redeem"
                         className="text-center h-8 text-sm"
                         min={0}
                         max={pointsAvailable}
                       />
                       {pointsError && (
-                        <p className="text-xs text-destructive">Points tidak mencukupi! Maksimal: {pointsAvailable} points</p>
+                        <p className="text-xs text-destructive">Not enough points! Maximum: {pointsAvailable} points</p>
                       )}
                       {parseFloat(pointsToRedeem) > 0 && !pointsError && (
                         <p className="text-xs text-pos-success text-center">
@@ -460,7 +460,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                     </>
                   ) : (
                     <p className="text-xs sm:text-sm text-muted-foreground text-center py-2">
-                      Customer belum memiliki points
+                      Customer has no points yet
                     </p>
                   )}
                 </TabsContent>
@@ -522,7 +522,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               disabled={isProcessing || isPaymentStarted || !customerName || !customerPhone || pointstsError || discountError}
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              {isProcessing || isPaymentStarted ? "Memproses..." : "Bayar Sekarang"}
+              {isProcessing || isPaymentStarted ? "Processing..." : "Pay Now"}
             </Button>
 
             <Button
@@ -532,7 +532,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               disabled={isProcessing || isPaymentStarted || !customerName || !customerPhone || pointstsError || discountError}
             >
               <Clock className="h-4 w-4 mr-2" />
-              Bayar Nanti
+              Pay Later
             </Button>
           </div>
         </CardContent>

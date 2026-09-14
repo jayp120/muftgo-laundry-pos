@@ -80,7 +80,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
     }
   };
 
-  const quickCashOptions = [50000, 100000, 150000, 200000];
+  const quickCashOptions = [100, 500, 1000, 2000, 5000];
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString('en-IN');
@@ -109,9 +109,9 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]" aria-describedby="cash-payment-description">
         <DialogHeader>
-          <DialogTitle>Payment Cash</DialogTitle>
+          <DialogTitle>Cash Payment</DialogTitle>
           <DialogDescription id="cash-payment-description">
-            Pilih jenis pembayaran dan masukkan jumlah uang tunai yang diterima.
+            Select the payment type and enter the cash amount received.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleFormSubmit}>
@@ -127,14 +127,14 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
             {/* Payment Type Selection */}
             <div className="space-y-3">
-              <Label>Jenis Payment</Label>
+              <Label>Payment Type</Label>
               <RadioGroup value={paymentType} onValueChange={(value) => setPaymentType(value as 'full' | 'down_payment')}>
                 <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted cursor-pointer">
                   <RadioGroupItem value="full" id="full" />
                   <Label htmlFor="full" className="flex-1 cursor-pointer">
                     <div>
-                      <p className="font-medium">Bayar Penuh</p>
-                      <p className="text-xs text-muted-foreground">Bayar seluruh tagihan sekarang</p>
+                      <p className="font-medium">Pay in Full</p>
+                      <p className="text-xs text-muted-foreground">Pay the full bill now</p>
                     </div>
                   </Label>
                 </div>
@@ -142,8 +142,8 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                   <RadioGroupItem value="down_payment" id="down_payment" />
                   <Label htmlFor="down_payment" className="flex-1 cursor-pointer">
                     <div>
-                      <p className="font-medium">Uang Muka (DP)</p>
-                      <p className="text-xs text-muted-foreground">Bayar sebagian, sisanya nanti</p>
+                      <p className="font-medium">Advance</p>
+                      <p className="text-xs text-muted-foreground">Pay part now, rest later</p>
                     </div>
                   </Label>
                 </div>
@@ -154,7 +154,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="cash-received">
-                {paymentType === 'full' ? 'Amount Received' : 'Amount Uang Muka (DP)'}
+                {paymentType === 'full' ? 'Amount Received' : 'Advance Amount'}
               </Label>
               <Input
                 id="cash-received"
@@ -163,7 +163,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                 value={cashReceived}
                 onChange={(e) => setCashReceived(e.target.value)}
                 className="text-lg h-12 text-center"
-                placeholder={paymentType === 'full' ? "Contoh: 50000" : "Enter jumlah DP"}
+                placeholder={paymentType === 'full' ? "e.g. 5000" : "Enter advance amount"}
                 min={paymentType === 'full' ? totalAmount : 1}
                 max={paymentType === 'down_payment' ? totalAmount : undefined}
               />
@@ -179,7 +179,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                   onClick={() => setCashReceived(String(amount))}
                   disabled={paymentType === 'full' ? amount < totalAmount : amount > totalAmount}
                 >
-                  {amount >= 1000000 ? `${amount / 1000000}jt` : `${amount / 1000}rb`}
+                  {`₹${amount.toLocaleString('en-IN')}`}
                 </Button>
               ))}
             </div>
@@ -196,18 +196,18 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
             {paymentType === 'full' && cashValue >= totalAmount && change === 0 && (
               <div className="text-center p-4 bg-pos-highlight/20 rounded-lg border border-pos-highlight/60">
-                <p className="text-sm text-primary font-medium">Uang Pas</p>
+                <p className="text-sm text-primary font-medium">Exact Amount</p>
                 <p className="text-lg font-semibold text-primary">
-                  Tidak ada kembalian
+                  No change due
                 </p>
               </div>
             )}
 
             {paymentType === 'full' && cashValue > 0 && cashValue < totalAmount && (
               <div className="text-center p-3 bg-destructive/10 rounded-lg border border-destructive/30">
-                <p className="text-sm text-destructive font-medium">Uang Kurang</p>
+                <p className="text-sm text-destructive font-medium">Short Payment</p>
                 <p className="text-lg font-semibold text-destructive">
-                  Kurang ₹{formatCurrency(totalAmount - cashValue)}
+                  Short by ₹{formatCurrency(totalAmount - cashValue)}
                 </p>
               </div>
             )}
@@ -216,7 +216,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
             {paymentType === 'down_payment' && cashValue > 0 && cashValue <= totalAmount && (
               <div className="space-y-2">
                 <div className="text-center p-4 bg-pos-warning/10 rounded-lg border border-pos-warning/30">
-                  <p className="text-sm text-pos-warning font-medium">Uang Muka (DP)</p>
+                  <p className="text-sm text-pos-warning font-medium">Advance</p>
                   <p className="text-2xl font-bold text-pos-warning">
                     ₹{formatCurrency(cashValue)}
                   </p>
@@ -227,7 +227,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                     ₹{formatCurrency(remainingBalance)}
                   </p>
                   <p className="text-xs text-primary/70 mt-1">
-                    Akan dibayar saat pengambilan
+                    To be paid at pickup
                   </p>
                 </div>
               </div>
@@ -235,9 +235,9 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
             {paymentType === 'down_payment' && cashValue > totalAmount && (
               <div className="text-center p-3 bg-destructive/10 rounded-lg border border-destructive/30">
-                <p className="text-sm text-destructive font-medium">Amount Melebihi Total</p>
+                <p className="text-sm text-destructive font-medium">Amount Exceeds Total</p>
                 <p className="text-sm text-destructive/80">
-                  DP tidak boleh melebihi total pembayaran
+                  Advance cannot exceed the total amount
                 </p>
               </div>
             )}
@@ -245,14 +245,14 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Batal
+              Cancel
             </Button>
             <Button
               type="submit"
               variant="success"
               disabled={!isSubmitEnabled}
             >
-              {isSubmitting ? 'Memproses...' : paymentType === 'full' ? 'Konfirmasi Payment' : 'Konfirmasi DP'}
+              {isSubmitting ? 'Processing...' : paymentType === 'full' ? 'Confirm Payment' : 'Confirm Advance'}
             </Button>
           </DialogFooter>
         </form>

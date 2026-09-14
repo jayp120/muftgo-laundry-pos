@@ -223,7 +223,10 @@ export class WhatsAppClient {
 
       const testBody = JSON.stringify({ ...testMessage, message: '' }); // Empty message to test auth
 
-      // Don't actually send the test message, just test the API endpoint
+      // Don't actually send the test message, just test the API endpoint.
+      // 401 = upstream auth failed, 500 = server misconfigured (see api/whatsapp-send.js
+      // which checks env before body). Any other status (e.g. 400 for the empty
+      // message) means the endpoint is reachable and configured.
       if (Capacitor.isNativePlatform()) {
         const response = await CapacitorHttp.post({
           url: endpoint,
@@ -233,8 +236,7 @@ export class WhatsAppClient {
           readTimeout: 5000,
         });
 
-        // Even if it returns an error for empty message, 401 means auth failed
-        return response.status !== 401;
+        return response.status !== 401 && response.status !== 500;
       }
 
       const controller = new AbortController();
@@ -249,8 +251,7 @@ export class WhatsAppClient {
 
       clearTimeout(timeoutId);
 
-      // Even if it returns an error for empty message, 401 means auth failed
-      return response.status !== 401;
+      return response.status !== 401 && response.status !== 500;
     } catch (error) {
       console.error('Connection test failed:', error);
       return false;
@@ -258,26 +259,29 @@ export class WhatsAppClient {
   }
 
   /**
-   * Validate phone number format
+   * Validate phone number format - India-first (10-digit mobile starting 6-9,
+   * optionally with +91 / 91 prefix). Rejects obviously invalid numbers early
+   * so mis-typed customer numbers fail fast instead of failing at the API.
    * @param phoneNumber The phone number to validate
    * @returns true if valid, false otherwise
    */
   private isValidPhoneNumber(phoneNumber: string): boolean {
-    // Accept Indian (+91) and international formats
-    // Examples: +919876543210, 919876543210, 9876543210
-    const phoneRegex = /^(\+)?[1-9]\d{7,15}$/;
-    return phoneRegex.test(phoneNumber);
+    const digits = phoneNumber.replace(/\D/g, '').replace(/^0+/, '');
+    const ten = digits.startsWith('91') && digits.length === 12 ? digits.slice(2) : digits.slice(-10);
+    return /^[6-9]\d{9}$/.test(ten);
   }
 
   /**
-   * Format phone number to use "91" prefix without "+" sign (India default)
+   * Format phone number to use "91" prefix without "+" sign (India default).
+   * Strips leading zeros first so "09198..." doesn't become "9191...".
    * @param phoneNumber The phone number to format
    * @param defaultCountryCode Default country code if not provided (e.g., '91' for India)
    * @returns Formatted phone number with "91" prefix only (e.g., "919876543210")
    */
   static formatPhoneNumber(phoneNumber: string, defaultCountryCode: string = '91'): string {
-    // Remove all non-digit characters (including "+")
-    const cleaned = phoneNumber.replace(/\D/g, '');
+    // Remove all non-digit characters (including "+") and strip leading zeros
+    const cleaned = phoneNumber.replace(/\D/g, '').replace(/^0+/, '');
+    if (!cleaned) return '';
     
     // If already starts with country code
     if (cleaned.startsWith(defaultCountryCode)) {

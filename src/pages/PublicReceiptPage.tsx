@@ -49,7 +49,7 @@ export const PublicReceiptPage: React.FC = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       if (!orderId) {
-        setError('ID order tidak ditemukan');
+        setError('Order ID not found');
         setLoading(false);
         return;
       }
@@ -66,7 +66,7 @@ export const PublicReceiptPage: React.FC = () => {
         }
 
         if (!receiptResponse || !receiptResponse.order) {
-          setError('Order tidak ditemukan');
+          setError('Order not found');
           setLoading(false);
           return;
         }
@@ -83,8 +83,8 @@ export const PublicReceiptPage: React.FC = () => {
         if (receiptResponse.store) {
           setStoreInfo({
             name: receiptResponse.store.name || 'MuftGo Laundry POS',
-            address: receiptResponse.store.address || 'Alamat belum diset',
-            phone: receiptResponse.store.phone || 'Nomor telepon belum diset',
+            address: receiptResponse.store.address || 'Address not set',
+            phone: receiptResponse.store.phone || 'Phone number not set',
             enable_qr: receiptResponse.store.enable_qr || false,
             enable_points: receiptResponse.store.enable_points || false,
           });
@@ -92,15 +92,15 @@ export const PublicReceiptPage: React.FC = () => {
           // Fallback store info if no store data found
           setStoreInfo({
             name: 'MuftGo Laundry POS',
-            address: 'Alamat belum diset',
-            phone: 'Nomor telepon belum diset',
+            address: 'Address not set',
+            phone: 'Phone number not set',
             enable_qr: false,
             enable_points: false,
           });
         }
       } catch (err) {
         console.error('Error fetching order:', err);
-        setError('Gagal memuat data order');
+        setError('Failed to load order data');
       } finally {
         setLoading(false);
       }
@@ -112,8 +112,8 @@ export const PublicReceiptPage: React.FC = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
     ];
     
     const day = date.getDate().toString().padStart(2, '0');
@@ -169,7 +169,7 @@ export const PublicReceiptPage: React.FC = () => {
   // };
 
   if (loading) {
-    return <PageLoading text="Memuat nota digital..." />;
+    return <PageLoading text="Loading digital receipt..." />;
   }
 
   if (error || !order) {
@@ -178,8 +178,8 @@ export const PublicReceiptPage: React.FC = () => {
         <div className="w-full max-w-md mx-4 bg-white border border-gray-200 rounded-lg p-6">
           <div className="text-center">
             <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Nota Tidak Ditemukan</h2>
-            <p className="text-gray-600">{error || 'Order dengan ID tersebut tidak ditemukan.'}</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Receipt Not Found</h2>
+            <p className="text-gray-600">{error || 'No order found with that ID.'}</p>
           </div>
         </div>
       </div>
@@ -207,10 +207,10 @@ export const PublicReceiptPage: React.FC = () => {
               {storeInfo?.name || 'MuftGo Laundry POS'}
             </h1>
             <p className="text-xs sm:text-sm text-gray-600 mb-1 print-text center">
-              {storeInfo?.address || 'Alamat belum diset'}
+              {storeInfo?.address || 'Address not set'}
             </p>
             <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 print-text center">
-              No. HP {storeInfo?.phone || 'Nomor telepon belum diset'}
+              Mobile {storeInfo?.phone || 'Phone number not set'}
             </p>
 
             {/* QR Code for Payment - Only show if enabled in store settings */}
@@ -231,7 +231,7 @@ export const PublicReceiptPage: React.FC = () => {
                   }}
                 />
                 <p className="text-xs text-gray-500 mt-2 print-text center">
-                  Scan QR Code untuk pembayaran digital
+                  Scan QR code for digital payment
                 </p>
               </div>
             )}
@@ -246,11 +246,11 @@ export const PublicReceiptPage: React.FC = () => {
             {/* Customer Information */}
             <div className="text-center space-y-1">
               <p className="text-sm">
-                <span className="text-gray-600">Nama:</span>{' '}
+                <span className="text-gray-600">Name:</span>{' '}
                 <span className="font-medium text-gray-800">{order.customer_name}</span>
               </p>
               <p className="text-sm">
-                <span className="text-gray-600">No. HP:</span>{' '}
+                <span className="text-gray-600">Mobile:</span>{' '}
                 <span className="font-medium text-gray-800">{maskPhoneNumber(order.customer_phone)}</span>
               </p>
             </div>
@@ -258,10 +258,10 @@ export const PublicReceiptPage: React.FC = () => {
             {/* Service Type */}
             <div className="mt-3 sm:mt-4 text-center">
               <p className="text-base sm:text-lg font-bold text-gray-800 mb-1">
-                {order.order_items[0]?.service_name || 'Service Kiloan'}
+                {order.order_items[0]?.service_name || 'Wash by Weight'}
               </p>
               <p className="text-xs sm:text-sm text-gray-500">
-                ({order.order_items[0]?.service_name?.toUpperCase() || 'KILOAN REGULER'})
+                ({order.order_items[0]?.service_name?.toUpperCase() || 'REGULAR WASH'})
               </p>
             </div>
           </div>
@@ -269,35 +269,35 @@ export const PublicReceiptPage: React.FC = () => {
           {/* Status Section */}
           <div className="bg-white p-3 sm:p-4 border-b border-gray-200">
             <div className="flex justify-between items-center mb-3 sm:mb-4">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-800">STATUS LAYANAN</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-800">SERVICE STATUS</h2>
               <span className="bg-emerald-500 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium">
-                {order.execution_status === 'completed' ? 'Sudah Diambil' : 
-                 order.execution_status === 'ready_for_pickup' ? 'Siap Diambil' :
-                 order.execution_status === 'in_progress' ? 'Sedang Dikerjakan' : 'In Queue'}
+                {order.execution_status === 'completed' ? 'Collected' : 
+                 order.execution_status === 'ready_for_pickup' ? 'Ready for Pickup' :
+                 order.execution_status === 'in_progress' ? 'In Progress' : 'In Queue'}
               </span>
             </div>
             
             {/* Status Timeline */}
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Order Diterima</span>
-                <span className="text-gray-500">{formatDate(order.order_date)}, {formatTime(order.order_date)} WIB</span>
+                <span className="text-gray-600">Order Received</span>
+                <span className="text-gray-500">{formatDate(order.order_date)}, {formatTime(order.order_date)} IST</span>
               </div>
               
               {order.updated_at && (
                 <div className="flex justify-between items-center">
-                  <span className="text-emerald-600 italic">Terakhir Diperbaharui</span>
-                  <span className="text-emerald-600 italic">{formatDate(order.updated_at)}, {formatTime(order.updated_at)} WIB</span>
+                  <span className="text-emerald-600 italic">Last Updated</span>
+                  <span className="text-emerald-600 italic">{formatDate(order.updated_at)}, {formatTime(order.updated_at)} IST</span>
                 </div>
               )}
               
               <div className="border-t border-dashed border-gray-300 pt-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Laundry {order.execution_status === 'completed' ? 'Sudah Diambil' : 'Siap Diambil'}</span>
+                  <span className="text-gray-600">Laundry {order.execution_status === 'completed' ? 'Collected' : 'Ready for Pickup'}</span>
                   <span className="text-gray-500">
                     {order.execution_status === 'completed' ? 
-                      `${formatDate(order.updated_at || order.order_date)}, ${formatTime(order.updated_at || order.order_date)} WIB` :
-                      `${formatDate(order.estimated_completion || order.order_date)}, ${formatTime(order.estimated_completion || order.order_date)} WIB`
+                      `${formatDate(order.updated_at || order.order_date)}, ${formatTime(order.updated_at || order.order_date)} IST` :
+                      `${formatDate(order.estimated_completion || order.order_date)}, ${formatTime(order.estimated_completion || order.order_date)} IST`
                     }
                   </span>
                 </div>
@@ -305,13 +305,13 @@ export const PublicReceiptPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Detail Transaksi */}
+          {/* Transaction Details */}
           <div className="p-3 sm:p-4">
             <div
               className="flex justify-between items-center cursor-pointer mb-3 sm:mb-4"
               onClick={() => setShowDetails(!showDetails)}
             >
-              <h2 className="text-base sm:text-lg font-semibold text-gray-800">Detail Transaksi</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-800">Transaction Details</h2>
               {showDetails ? (
                 <ChevronUp className="h-5 w-5 text-gray-600" />
               ) : (
@@ -324,8 +324,8 @@ export const PublicReceiptPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Status</span>
                 <span className="text-emerald-600 font-medium">
-                  {order.payment_status === 'completed' ? 'LUNAS' : 
-                   order.payment_status === 'down_payment' ? 'DP (BELUM LUNAS)' : 'BELUM LUNAS'}
+                  {order.payment_status === 'completed' ? 'PAID' : 
+                   order.payment_status === 'down_payment' ? 'ADVANCE (UNPAID)' : 'UNPAID'}
                 </span>
               </div>
               
@@ -333,7 +333,7 @@ export const PublicReceiptPage: React.FC = () => {
                 <span className="text-gray-600">Payment Method</span>
                 <span className="text-emerald-600 font-medium">
                   {order.payment_method?.toUpperCase() || 'CASH'}
-                  {order.payment_status === 'down_payment' && ' (DP)'}
+                  {order.payment_status === 'down_payment' && ' (Advance)'}
                 </span>
               </div>
 
@@ -419,7 +419,7 @@ export const PublicReceiptPage: React.FC = () => {
                   <div className="space-y-3">
                     <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
                       <span className="w-1 h-4 bg-cyan-500 rounded"></span>
-                      Produk & Barang:
+                      Products & Items:
                     </h3>
                     {order.order_items
                       .filter(item => item.item_type === 'product')
@@ -448,7 +448,7 @@ export const PublicReceiptPage: React.FC = () => {
             {/* Pricing Breakdown */}
             <div className="mt-4 space-y-2 text-sm border-t border-dashed border-gray-300 pt-4">
               {/* <div className="flex justify-between">
-                <span className="text-gray-600">Harga /kg</span>
+                <span className="text-gray-600">Price /kg</span>
                 <span className="text-gray-800">
                   {(() => {
                     const pricePerKg = calculatePricePerKg(order);
@@ -482,7 +482,7 @@ export const PublicReceiptPage: React.FC = () => {
               {(order.payment_status === 'down_payment' || (order.payment_amount && order.payment_amount < order.total_amount)) && (
                 <>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Bayar DP</span>
+                    <span className="text-gray-600">Pay Advance</span>
                     <span className="text-yellow-600 font-medium">
                       ₹ {(order.payment_amount || 0).toLocaleString('en-IN')}
                     </span>
@@ -501,7 +501,7 @@ export const PublicReceiptPage: React.FC = () => {
               {order.payment_method === 'cash' && order.payment_status === 'completed' && order.cash_received && (
                 <>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">DiBayar</span>
+                    <span className="text-gray-600">Paid</span>
                     <span className="text-gray-800">
                       ₹ {order.cash_received.toLocaleString('en-IN')}
                     </span>
@@ -521,15 +521,15 @@ export const PublicReceiptPage: React.FC = () => {
             {/* Payment Info */}
             <div className="mt-4 pt-4 border-t border-dashed border-gray-300 text-sm text-gray-500 space-y-1">
               <div className="flex justify-between items-center">
-               <span className="text-gray-600 italic">{order.payment_status === 'completed' ? 'Dilunasi ' : 'Belum Dilunasi'}</span>
+                <span className="text-gray-600 italic">{order.payment_status === 'completed' ? 'Paid ' : 'Unpaid'}</span>
                 {order.payment_status === 'completed' && (
                    <span className="text-emerald-600 italic">
-                    {formatDate(order.updated_at)}, {formatTime(order.updated_at)} WIB
+                    {formatDate(order.updated_at)}, {formatTime(order.updated_at)} IST
                   </span>
                 )}
               </div>
               <div className="italic">
-                Ketuk/Sentuh "Detail Transaksi" untuk melihat item service
+                Tap "Transaction Details" to view service items
               </div>
             </div>
           </div>
@@ -543,20 +543,20 @@ export const PublicReceiptPage: React.FC = () => {
                 compact={true}
               />
               <p className="text-xs text-gray-500 text-center mt-2">
-                Points dapat digunakan untuk diskon pada transaksi berikutnya
+                Points can be used for discount on your next visit
               </p>
             </div>
           )}
 
           {/* Catatan Section */}
           <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Catatan</h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Notes</h3>
             <div className="text-xs text-gray-600 space-y-2">
-              <p><strong>KETENTUAN :</strong></p>
-              <p>1. Pakaian Luntur bukan menjadi tanggung jawab laundry.</p>
-              <p>2. Komplain pakaian kami layani 1x24 jam, sejak pakaian diambil.</p>
-              <p>3. Laundry yang tidak diambil jangka waktu 1 bulan, jika terjadi kerusakan menjadi tanggung jawab pemilik.</p>
-              <p className="mt-3 text-center italic">Terimakasih atas kunjungan anda</p>
+              <p><strong>TERMS :</strong></p>
+              <p>1. Colour-bleeding garments are not the laundry&apos;s responsibility.</p>
+              <p>2. Complaints are accepted within 24 hours of pickup.</p>
+              <p>3. Laundry not collected within 1 month - any damage thereafter is the owner&apos;s responsibility.</p>
+              <p className="mt-3 text-center italic">Thank you for visiting us</p>
             </div>
           </div>
 

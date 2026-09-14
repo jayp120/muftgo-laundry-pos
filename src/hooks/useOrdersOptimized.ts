@@ -153,14 +153,14 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
           // If search contains only digits, create multiple phone format variations
           const digitsOnly = searchPattern.replace(/\D/g, '');
           if (digitsOnly.length > 0) {
-            // Try various Indonesian phone number formats
+            // Try various Indian phone number formats
             const variations = [
-              digitsOnly,                    // Raw digits: 811234567
-              `0${digitsOnly}`,             // With leading zero: 0811234567
-              `+62${digitsOnly}`,           // With country code: +62811234567
-              `62${digitsOnly}`,            // Country code without +: 62811234567
-              `0${digitsOnly.substring(2)}`, // Remove first two digits and add 0: 0811234567 from 62811234567
-              digitsOnly.substring(2),       // Remove first two digits: 811234567 from 62811234567
+              digitsOnly,                    // Raw digits: 9876543210
+              `0${digitsOnly}`,             // With leading zero: 0987654321
+              `+91${digitsOnly}`,           // With country code: +919876543210
+              `91${digitsOnly}`,            // Country code without +: 919876543210
+              `0${digitsOnly.substring(2)}`, // Remove first two digits and add 0: 0987654321 from 919876543210
+              digitsOnly.substring(2),       // Remove first two digits: 9876543210 from 919876543210
             ];
             
             // Add formatted versions with spaces, dashes, etc.
@@ -176,19 +176,19 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
             });
           }
           
-          // If search starts with 0, also try with +62 instead
+          // If search starts with 0, also try with +91 instead
           if (searchPattern.startsWith('0')) {
-            const withCountryCode = `+62${searchPattern.substring(1)}`;
-            const withCountryCodeNoPlus = `62${searchPattern.substring(1)}`;
+            const withCountryCode = `+91${searchPattern.substring(1)}`;
+            const withCountryCodeNoPlus = `91${searchPattern.substring(1)}`;
             phoneSearchQueries.push(`customer_phone.ilike.%${withCountryCode}%`);
             phoneSearchQueries.push(`customer_phone.ilike.%${withCountryCodeNoPlus}%`);
           }
           
-          // If search starts with +62 or 62, also try with 0 instead
-          if (searchPattern.startsWith('+62')) {
+          // If search starts with +91 or 91, also try with 0 instead
+          if (searchPattern.startsWith('+91')) {
             const withZero = `0${searchPattern.substring(3)}`;
             phoneSearchQueries.push(`customer_phone.ilike.%${withZero}%`);
-          } else if (searchPattern.startsWith('62') && digitsOnly === searchPattern) {
+          } else if (searchPattern.startsWith('91') && digitsOnly === searchPattern) {
             const withZero = `0${searchPattern.substring(2)}`;
             phoneSearchQueries.push(`customer_phone.ilike.%${withZero}%`);
           }

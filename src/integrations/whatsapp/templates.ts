@@ -32,7 +32,7 @@ const getReceiptBaseUrl = (): string => {
 /**
  * Get payment status in English (India)
  */
-const getPaymentStatusIndonesian = (status: string): string => {
+const getPaymentStatus = (status: string): string => {
   const statusMap: { [key: string]: string } = {
     'pending': 'Unpaid',
     'completed': 'Paid',
@@ -41,6 +41,9 @@ const getPaymentStatusIndonesian = (status: string): string => {
   };
   return statusMap[status] || status;
 };
+
+// Kept for backward compatibility with any existing imports.
+const getPaymentStatusIndonesian = getPaymentStatus;
 
 /**
  * Warm, personalized closing lines shared by every notification template
@@ -95,18 +98,18 @@ export const messageTemplates: MessageTemplate = {
         }).join('\n\n')
       : 'Service : Regular';
 
-    // Build pointsts redeemed message if pointsts were used for discount
-    const pointstsRedeemedMessage = data.pointsRedeemed && data.pointsRedeemed > 0
+    // Build points redeemed message if points were used for discount
+    const pointsRedeemedMessage = data.pointsRedeemed && data.pointsRedeemed > 0
       ? `\n🎁 Points Redeemed : ${data.pointsRedeemed} pts (-₹${(data.discountAmount || data.pointsRedeemed * POINTS_TO_CURRENCY_RATE).toLocaleString('en-IN')})`
       : '';
 
-    // Build pointsts earned message if pointsts were earned
-    const pointstsEarnedMessage = data.pointsEarned && data.pointsEarned > 0 && data.paymentStatus === 'completed'
-      ? `\n🎉 Congratulations! You earned ${data.pointsEarned} laundry pointsts! 🎉\n(1 pointst per kg/unit)`
+    // Build points earned message if points were earned
+    const pointsEarnedMessage = data.pointsEarned && data.pointsEarned > 0 && data.paymentStatus === 'completed'
+      ? `\n🎉 Congratulations! You earned ${data.pointsEarned} laundry points! 🎉\n(1 point per kg/unit)`
       : '';
 
-    // Combine pointsts messages
-    const pointstsMessage = (pointsRedeemedMessage || pointstsEarnedMessage)
+    // Combine points messages
+    const pointsMessage = (pointsRedeemedMessage || pointsEarnedMessage)
       ? `${pointsRedeemedMessage}${pointsEarnedMessage}\n====================`
       : '';
 
@@ -131,7 +134,7 @@ Subtotal = ₹${data.subtotal.toLocaleString('en-IN')}${discountSection}
 Estimated Completion : 
 ${estimatedDate}
 ====================
-Status : ${getPaymentStatusIndonesian(data.paymentStatus)}
+Status : ${getPaymentStatus(data.paymentStatus)}
 ${pointsMessage}
 
 Thank you for using our service! 🙏
@@ -233,7 +236,7 @@ Your clothes are ready. Please collect from ${data.storeInfo.name}
 Receipt No : ${data.orderId.slice(-8).toUpperCase()}
 
 Total : ₹${data.totalAmount.toLocaleString('en-IN')}
-Payment Status: ${getPaymentStatusIndonesian(data.paymentStatus)}
+Payment Status: ${getPaymentStatus(data.paymentStatus)}
 
 Thank you for using our service! 🙏
 ====================
@@ -245,9 +248,9 @@ ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
    * Template for payment confirmation notification (pay later payments)
    */
   paymentConfirmation: (data: PaymentConfirmationData): string => {
-    // Build pointsts earned message if pointsts were earned
-    const pointstsEarnedMessage = data.pointsEarned && data.pointsEarned > 0
-      ? `\n🎉 Congratulations! You earned ${data.pointsEarned} laundry pointsts! 🎉`
+    // Build points earned message if points were earned
+    const pointsEarnedMessage = data.pointsEarned && data.pointsEarned > 0
+      ? `\n🎉 Congratulations! You earned ${data.pointsEarned} laundry points! 🎉`
       : '';
 
     return `✅ *PAYMENT CONFIRMED* ✅
@@ -255,7 +258,7 @@ ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
 Hi ${data.customerName} 👋
 
 Your payment is confirmed. Thank you! 💚
-Payment Status: ${getPaymentStatusIndonesian(data.paymentStatus)}${pointsEarnedMessage}
+Payment Status: ${getPaymentStatus(data.paymentStatus)}${pointsEarnedMessage}
 
 ${getRandomWarmClosing()}
 

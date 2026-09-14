@@ -115,7 +115,7 @@ export const useCreateOrderWithNotifications = () => {
             pointsts_changed: -orderData.points_redeemed,
             transaction_type: 'redemption',
             transaction_date: new Date().toISOString(),
-            notes: `Points redeemed for order ${order.id.slice(0, 8)} (Rp${orderData.discount_amount} discount)`,
+            notes: `Points redeemed for order ${order.id.slice(0, 8)} (₹${orderData.discount_amount} discount)`,
           });
       }
 
@@ -445,7 +445,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
             pointsts_changed: -pointsRedeemed,
             transaction_type: 'redemption',
             transaction_date: new Date().toISOString(),
-            notes: `Points redeemed for order ${orderId.slice(0, 8)} (Rp${discountAmount || pointstsRedeemed * POINTS_TO_CURRENCY_RATE} discount)`,
+            notes: `Points redeemed for order ${orderId.slice(0, 8)} (₹${discountAmount || pointstsRedeemed * POINTS_TO_CURRENCY_RATE} discount)`,
           });
 
         if (transactionError) {

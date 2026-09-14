@@ -22,12 +22,12 @@ export const SmartHomePage = () => {
 
   // If loading or user is authenticated (before redirect), show nothing or loading
   if (loading) {
-    return <PageLoading text="Memuat..." />;
+    return <PageLoading text="Loading..." />;
   }
 
   // If user is authenticated, they'll be redirected, but show loading state briefly
   if (user) {
-    return <PageLoading text="Mengalihkan ke POS..." />;
+    return <PageLoading text="Redirecting to POS..." />;
   }
 
   // If user is not authenticated, show the appropriate landing experience

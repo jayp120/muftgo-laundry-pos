@@ -113,7 +113,7 @@ export const AppHeader: React.FC = () => {
                 <DropdownMenuContent align="start" className="w-48">
                   <DropdownMenuItem onClick={handleHomeNavigation}>
                     <Home className="h-4 w-4 mr-2" />
-                    Beranda
+                    Home
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handlePOSNavigation}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -129,7 +129,7 @@ export const AppHeader: React.FC = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleExpensesNavigation}>
                     <Wallet className="h-4 w-4 mr-2" />
-                    Pengeluaran
+                    Expenses
                   </DropdownMenuItem>
                   {isOwner && (
                     <>
@@ -140,7 +140,7 @@ export const AppHeader: React.FC = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleStoresNavigation}>
                         <Building2 className="h-4 w-4 mr-2" />
-                        Manajemen Toko
+                        Store Management
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleWhatsAppBroadcastNavigation}>
                         <MessageSquare className="h-4 w-4 mr-2" />
@@ -148,7 +148,7 @@ export const AppHeader: React.FC = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleRevenueReportNavigation}>
                         <TrendingUp className="h-4 w-4 mr-2" />
-                        Laporan Pendapatan
+                        Revenue Report
                       </DropdownMenuItem>
                     </>
                   )}
@@ -180,7 +180,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Home className="h-4 w-4" />
-              <span>Beranda</span>
+              <span>Home</span>
             </Button>
 
             <Button
@@ -208,7 +208,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <History className="h-4 w-4" />
-              <span>Riwayat</span>
+              <span>History</span>
             </Button>
 
             <Button
@@ -236,7 +236,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Wallet className="h-4 w-4" />
-              <span>Pengeluaran</span>
+              <span>Expenses</span>
             </Button>
 
             {/* Owner-only Navigation - Consolidated Dropdown */}
@@ -253,11 +253,11 @@ export const AppHeader: React.FC = () => {
                     }`}
                   >
                     <Settings className="h-4 w-4" />
-                    <span>Kelola</span>
+                    <span>Manage</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Manajemen</DropdownMenuLabel>
+                  <DropdownMenuLabel>Management</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleServicesNavigation}>
                     <Wrench className="h-4 w-4 mr-2" />
@@ -268,7 +268,7 @@ export const AppHeader: React.FC = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleStoresNavigation}>
                     <Building2 className="h-4 w-4 mr-2" />
-                    Manajemen Toko
+                    Store Management
                     {location.pathname === '/stores' && (
                       <Check className="h-4 w-4 ml-auto text-blue-600" />
                     )}
@@ -282,7 +282,7 @@ export const AppHeader: React.FC = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleRevenueReportNavigation}>
                     <TrendingUp className="h-4 w-4 mr-2" />
-                    Laporan Pendapatan
+                    Revenue Report
                     {location.pathname === '/revenue-report' && (
                       <Check className="h-4 w-4 ml-auto text-blue-600" />
                     )}
@@ -307,7 +307,7 @@ export const AppHeader: React.FC = () => {
                 trigger={
                   <Button variant="default" size="sm" className="h-9 px-3 bg-blue-600 text-white hover:bg-blue-700">
                     <UserPlus className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Tambah Customer</span>
+                    <span className="hidden sm:inline">Add Customer</span>
                   </Button>
                 }
               />
@@ -334,7 +334,7 @@ export const AppHeader: React.FC = () => {
                       {user.email}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground capitalize">
-                      {user.role === 'laundry_owner' ? 'Pemilik' : 'Karyawan'}
+                      {user.role === 'laundry_owner' ? 'Owner' : 'Staff'}
                     </p>
                     {currentStore && (
                       <Badge variant="secondary" className="w-fit text-xs">
@@ -346,7 +346,7 @@ export const AppHeader: React.FC = () => {
                 <DropdownMenuSeparator />
                 {isOwner && (
                   <div className="md:hidden">
-                    <DropdownMenuLabel>Ganti Toko</DropdownMenuLabel>
+                    <DropdownMenuLabel>Switch Store</DropdownMenuLabel>
                     {userStores.map((store) => (
                       <DropdownMenuItem
                         key={store.store_id}
@@ -367,7 +367,7 @@ export const AppHeader: React.FC = () => {
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           {store.is_owner && (
-                            <Badge variant="secondary" className="text-xs">Pemilik</Badge>
+                            <Badge variant="secondary" className="text-xs">Owner</Badge>
                           )}
                           {currentStore?.store_id === store.store_id && (
                             <Check className="h-3 w-3 text-primary" />
@@ -386,7 +386,7 @@ export const AppHeader: React.FC = () => {
                         onSelect={(e) => e.preventDefault()}
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
-                        Tambah Customer
+                        Add Customer
                       </DropdownMenuItem>
                     }
                   />
@@ -394,24 +394,24 @@ export const AppHeader: React.FC = () => {
                 </div>
                 <DropdownMenuItem onClick={() => navigate('/install')}>
                   <Smartphone className="h-4 w-4 mr-2" />
-                  Install Aplikasi
+                  Install App
                 </DropdownMenuItem>
                 <ChangePasswordDialog
                   trigger={
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                       <KeyRound className="h-4 w-4 mr-2" />
-                      Ubah Password
+                      Change Password
                     </DropdownMenuItem>
                   }
                 />
                 <DropdownMenuItem>
                   <Settings className="h-4 w-4 mr-2" />
-                  Pengaturan
+                  Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Keluar
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -8,9 +8,9 @@ interface PWAInstallPromptProps {
 }
 
 export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ onDismiss }) => {
-  const { isInstallable, installPWA } = usePWAInstall();
+  const { canInstall, installPWA } = usePWAInstall();
 
-  if (!isInstallable) return null;
+  if (!canInstall) return null;
 
   const handleInstall = () => {
     installPWA();

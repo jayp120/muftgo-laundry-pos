@@ -5,7 +5,7 @@ const makeClient = (overrides: Partial<SenderFlowClient> = {}): SenderFlowClient
   checkSender: vi.fn().mockResolvedValue({ success: true, registered: false, sender_id: null }),
   startQRRegistration: vi.fn().mockResolvedValue({ success: true, session_id: 'sess-1', qr_code: 'qr-base64' }),
   startCodeRegistration: vi.fn().mockResolvedValue({ success: true, session_id: 'sess-1', pairing_code: '1234-5678' }),
-  getRegistrationStatus: vi.fn().mockResolvedValue({ success: true, status: 'connected', sender_id: '6281111111111' }),
+  getRegistrationStatus: vi.fn().mockResolvedValue({ success: true, status: 'connected', sender_id: '919111111111' }),
   ...overrides,
 });
 
@@ -17,18 +17,18 @@ const instantSleep = () => Promise.resolve();
 describe('runSenderPairing', () => {
   it('links directly when the phone is already a registered sender, without starting pairing', async () => {
     const client = makeClient({
-      checkSender: vi.fn().mockResolvedValue({ success: true, registered: true, sender_id: '6282125458657' }),
+      checkSender: vi.fn().mockResolvedValue({ success: true, registered: true, sender_id: '919212545865' }),
     });
     const persistSender = vi.fn().mockResolvedValue(undefined);
     const states: SenderFlowState[] = [];
 
-    const result = await runSenderPairing('081234567890', 'qr', { client, persistSender }, (s) => states.push(s));
+    const result = await runSenderPairing('09876543210', 'qr', { client, persistSender }, (s) => states.push(s));
 
-    expect(result).toEqual({ phase: 'linked', senderId: '6282125458657' });
-    expect(persistSender).toHaveBeenCalledWith('6282125458657');
+    expect(result).toEqual({ phase: 'linked', senderId: '919212545865' });
+    expect(persistSender).toHaveBeenCalledWith('919212545865');
     expect(client.startQRRegistration).not.toHaveBeenCalled();
-    // Normalizes 081... to 62... before checking.
-    expect(client.checkSender).toHaveBeenCalledWith('6281234567890');
+    // Normalizes 098... to 91... before checking.
+    expect(client.checkSender).toHaveBeenCalledWith('919876543210');
   });
 
   it('runs the QR flow through pending -> connected and persists the sender', async () => {
@@ -36,20 +36,20 @@ describe('runSenderPairing', () => {
       getRegistrationStatus: vi
         .fn()
         .mockResolvedValueOnce({ success: true, status: 'pending', qr_code: 'qr-refreshed' })
-        .mockResolvedValueOnce({ success: true, status: 'connected', sender_id: '6283333333333' }),
+        .mockResolvedValueOnce({ success: true, status: 'connected', sender_id: '919333333333' }),
     });
     const persistSender = vi.fn().mockResolvedValue(undefined);
     const states: SenderFlowState[] = [];
 
     const result = await runSenderPairing(
-      '6281234567890',
+      '919876543210',
       'qr',
       { client, persistSender, sleep: instantSleep },
       (s) => states.push(s),
     );
 
-    expect(result).toEqual({ phase: 'connected', senderId: '6283333333333' });
-    expect(persistSender).toHaveBeenCalledWith('6283333333333');
+    expect(result).toEqual({ phase: 'connected', senderId: '919333333333' });
+    expect(persistSender).toHaveBeenCalledWith('919333333333');
     expect(states.some((s) => s.phase === 'awaiting_qr' && s.qrCode === 'qr-base64')).toBe(true);
     expect(states.some((s) => s.phase === 'awaiting_qr' && s.qrCode === 'qr-refreshed')).toBe(true);
   });
@@ -59,9 +59,9 @@ describe('runSenderPairing', () => {
     const persistSender = vi.fn().mockResolvedValue(undefined);
     const states: SenderFlowState[] = [];
 
-    await runSenderPairing('6281234567890', 'code', { client, persistSender }, (s) => states.push(s));
+    await runSenderPairing('919876543210', 'code', { client, persistSender }, (s) => states.push(s));
 
-    expect(client.startCodeRegistration).toHaveBeenCalledWith('6281234567890');
+    expect(client.startCodeRegistration).toHaveBeenCalledWith('919876543210');
     expect(states.some((s) => s.phase === 'awaiting_code' && s.pairingCode === '1234-5678')).toBe(true);
   });
 
@@ -71,7 +71,7 @@ describe('runSenderPairing', () => {
     });
     const persistSender = vi.fn();
 
-    const result = await runSenderPairing('6281234567890', 'qr', { client, persistSender }, () => {});
+    const result = await runSenderPairing('919876543210', 'qr', { client, persistSender }, () => {});
 
     expect(result).toEqual({ phase: 'failed', error: 'upstream unavailable' });
     expect(client.getRegistrationStatus).not.toHaveBeenCalled();
@@ -87,14 +87,14 @@ describe('runSenderPairing', () => {
       checkSender: vi
         .fn()
         .mockResolvedValueOnce({ success: true, registered: false, sender_id: null }) // pre-flight check
-        .mockResolvedValueOnce({ success: true, registered: true, sender_id: '6284444444444' }), // recovery
+        .mockResolvedValueOnce({ success: true, registered: true, sender_id: '919444444444' }), // recovery
     });
     const persistSender = vi.fn().mockResolvedValue(undefined);
 
-    const result = await runSenderPairing('6281234567890', 'qr', { client, persistSender }, () => {});
+    const result = await runSenderPairing('919876543210', 'qr', { client, persistSender }, () => {});
 
-    expect(result).toEqual({ phase: 'connected', senderId: '6284444444444' });
-    expect(persistSender).toHaveBeenCalledWith('6284444444444');
+    expect(result).toEqual({ phase: 'connected', senderId: '919444444444' });
+    expect(persistSender).toHaveBeenCalledWith('919444444444');
   });
 
   it('fails when the terminal response is lost and recovery finds nothing', async () => {
@@ -104,7 +104,7 @@ describe('runSenderPairing', () => {
     });
     const persistSender = vi.fn();
 
-    const result = await runSenderPairing('6281234567890', 'qr', { client, persistSender }, () => {});
+    const result = await runSenderPairing('919876543210', 'qr', { client, persistSender }, () => {});
 
     expect(result).toEqual({ phase: 'failed', error: 'pairing rejected' });
     expect(persistSender).not.toHaveBeenCalled();
@@ -117,7 +117,7 @@ describe('runSenderPairing', () => {
     const persistSender = vi.fn();
 
     const result = await runSenderPairing(
-      '6281234567890',
+      '919876543210',
       'qr',
       { client, persistSender, sleep: instantSleep, isCancelled: () => true },
       () => {},
@@ -135,7 +135,7 @@ describe('runSenderPairing', () => {
     const persistSender = vi.fn();
 
     const result = await runSenderPairing(
-      '6281234567890',
+      '919876543210',
       'qr',
       { client, persistSender, sleep: instantSleep, timeoutMs: 5, pollIntervalMs: 0 },
       () => {},
@@ -149,14 +149,14 @@ describe('runSenderPairing', () => {
 describe('verifyExistingSender', () => {
   it('persists the sender id and reports registered when found', async () => {
     const client = makeClient({
-      checkSender: vi.fn().mockResolvedValue({ success: true, registered: true, sender_id: '6285555555555' }),
+      checkSender: vi.fn().mockResolvedValue({ success: true, registered: true, sender_id: '919555555555' }),
     });
     const persistSender = vi.fn().mockResolvedValue(undefined);
 
-    const result = await verifyExistingSender('6281234567890', { client, persistSender });
+    const result = await verifyExistingSender('919876543210', { client, persistSender });
 
-    expect(result).toEqual({ registered: true, senderId: '6285555555555' });
-    expect(persistSender).toHaveBeenCalledWith('6285555555555');
+    expect(result).toEqual({ registered: true, senderId: '919555555555' });
+    expect(persistSender).toHaveBeenCalledWith('919555555555');
   });
 
   it('persists null and reports unregistered when the sender is gone', async () => {
@@ -165,7 +165,7 @@ describe('verifyExistingSender', () => {
     });
     const persistSender = vi.fn().mockResolvedValue(undefined);
 
-    const result = await verifyExistingSender('6281234567890', { client, persistSender });
+    const result = await verifyExistingSender('919876543210', { client, persistSender });
 
     expect(result).toEqual({ registered: false, senderId: null });
     expect(persistSender).toHaveBeenCalledWith(null);

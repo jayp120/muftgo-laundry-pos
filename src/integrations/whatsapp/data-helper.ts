@@ -46,8 +46,8 @@ export class WhatsAppDataHelper {
           if (!fallbackError && fallbackData) {
             return {
               name: fallbackData.name || 'MuftGo Laundry POS',
-              address: fallbackData.address || 'Alamat belum diset',
-              phone: fallbackData.phone || 'Nomor telepon belum diset',
+              address: fallbackData.address || 'Address not set',
+              phone: fallbackData.phone || 'Phone number not set',
               enable_qr: fallbackData.enable_qr,
               enable_points: fallbackData.enable_points,
               wa_use_store_number: fallbackData.wa_use_store_number,
@@ -59,15 +59,15 @@ export class WhatsAppDataHelper {
         // Return default store info as fallback
         return {
           name: 'MuftGo Laundry POS',
-          address: 'Alamat belum diset - silakan update di pengaturan toko',
-          phone: 'Nomor telepon belum diset',
+          address: 'Address not set - please update in store settings',
+          phone: 'Phone number not set',
         };
       }
 
       return {
         name: data.name || 'MuftGo Laundry POS',
-        address: data.address || 'Alamat belum diset - silakan update di pengaturan toko',
-        phone: data.phone || 'Nomor telepon belum diset',
+        address: data.address || 'Address not set - please update in store settings',
+        phone: data.phone || 'Phone number not set',
         enable_qr: data.enable_qr,
         enable_points: data.enable_points,
         wa_use_store_number: data.wa_use_store_number,
@@ -78,8 +78,8 @@ export class WhatsAppDataHelper {
       // Return default store info as fallback
       return {
         name: 'MuftGo Laundry POS',
-        address: 'Alamat belum diset - silakan update di pengaturan toko',
-        phone: 'Nomor telepon belum diset',
+        address: 'Address not set - please update in store settings',
+        phone: 'Phone number not set',
       };
     }
   }
@@ -92,15 +92,15 @@ export class WhatsAppDataHelper {
     if (!storeData) {
       return {
         name: 'MuftGo Laundry POS',
-        address: 'Alamat belum diset - silakan update di pengaturan toko',
-        phone: 'Nomor telepon belum diset',
+        address: 'Address not set - please update in store settings',
+        phone: 'Phone number not set',
       };
     }
 
     return {
       name: storeData.store_name || storeData.name || 'MuftGo Laundry POS',
-      address: storeData.store_address || storeData.address || 'Alamat belum diset - silakan update di pengaturan toko',
-      phone: storeData.store_phone || storeData.phone || 'Nomor telepon belum diset',
+      address: storeData.store_address || storeData.address || 'Address not set - please update in store settings',
+      phone: storeData.store_phone || storeData.phone || 'Phone number not set',
       enable_qr: storeData.enable_qr,
       enable_points: storeData.enable_points,
       wa_use_store_number: storeData.wa_use_store_number,
@@ -127,11 +127,11 @@ export class WhatsAppDataHelper {
    */
   static getFormattedPaymentStatus(status: string): string {
     const statusMap: { [key: string]: string } = {
-      'pending': 'Belum Paid',
+      'pending': 'Pending',
       'completed': 'Paid',
       'down_payment': 'DP',
-      'partial': 'Sebagian',
-      'refunded': 'Dikembalikan'
+      'partial': 'Partial',
+      'refunded': 'Refunded'
     };
     return statusMap[status] || status;
   }
@@ -141,7 +141,7 @@ export class WhatsAppDataHelper {
    */
   static formatEstimatedCompletion(dateString?: string): string {
     if (!dateString) {
-      return 'Akan dikonfirmasi';
+      return 'To be confirmed';
     }
 
     try {
@@ -156,7 +156,7 @@ export class WhatsAppDataHelper {
       });
     } catch (error) {
       console.warn('Error formatting date:', error);
-      return 'Akan dikonfirmasi';
+      return 'To be confirmed';
     }
   }
 

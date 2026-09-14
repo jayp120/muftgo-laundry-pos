@@ -31,6 +31,9 @@ export const EnhancedLaundryPOS = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
+  // True when the current query was searched and matched nobody - the order
+  // submit auto-creates the customer, so this badge is the whole "add" UI.
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   const [showOrderSuccessDialog, setShowOrderSuccessDialog] = useState(false);
   const [showThermalPrintDialog, setShowThermalPrintDialog] = useState(false);
@@ -55,13 +58,18 @@ export const EnhancedLaundryPOS = () => {
   const [offlineReceiptData, setOfflineReceiptData] = useState<LocalReceiptData | null>(null);
 
   const navigate = useNavigate();
-  const { customers, searchCustomers, getCustomerByPhone, addCustomer, loading: customersLoading } = useCustomers();
+  const { searchCustomers, getCustomerByPhone, addCustomer, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
   const { currentStore } = useStore();
   const isOnline = useOnlineStatus();
   const pendingOfflineOrders = usePendingOrders(currentStore?.store_id);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const serviceSectionRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  // Monotonic id so slow earlier searches can't overwrite newer results
+  // (the "dropdown comes and goes" flicker when typing fast).
+  const searchSeqRef = useRef(0);
 
   // Queues an order locally to sync automatically once connectivity
   // returns. Points redemption is never part of the offline path (see docs
@@ -233,42 +241,50 @@ export const EnhancedLaundryPOS = () => {
     return longestDate;
   };
 
-  // Search for customers when phone/name changes - searches both fields
+  // Search for customers when phone/name changes - searches both fields.
+  // This effect is the SOLE writer of searchResults: results are taken from
+  // the search call's own return value (not the shared `customers` state),
+  // and stale responses are dropped via searchSeqRef. The old design copied
+  // from shared state in a second effect while this one cleared it - the two
+  // fought and the dropdown flickered ("comes and goes") while typing, and a
+  // slow earlier request could overwrite newer results.
   useEffect(() => {
+    const mySeq = ++searchSeqRef.current;
     const searchCustomer = async () => {
+      // A newer keystroke already superseded this run.
+      if (mySeq !== searchSeqRef.current) return;
       const q = (customerPhone || '').trim();
       // Don't search while selecting, or when both fields already complete
       const isFormFilled = q.length >= 3 && customerName.trim().length > 0;
-      
+
       if (q.length >= 2 && !isSelectingCustomer && !isFormFilled) {
         try {
-          await searchCustomers(q);
+          const results = await searchCustomers(q);
+          if (mySeq !== searchSeqRef.current) return;
+          setSearchResults(results ?? []);
+          setIsNewCustomer((results ?? []).length === 0);
           setShowResults(true);
         } catch {
           // searchCustomers already handles fallback - never blank the UI
-          setShowResults(false);
+          if (mySeq === searchSeqRef.current) {
+            setShowResults(false);
+          }
         }
       } else if (!isSelectingCustomer) {
         setSearchResults([]);
         setShowResults(false);
+        // Keep the "New" badge when the form just became complete (user
+        // finished typing a new customer's details); clear it only when the
+        // query itself was shortened/cleared.
+        if ((customerPhone || '').trim().length < 2) {
+          setIsNewCustomer(false);
+        }
       }
     };
 
     const debounceTimer = setTimeout(searchCustomer, 300);
     return () => clearTimeout(debounceTimer);
   }, [customerPhone, customerName, searchCustomers, isSelectingCustomer]);
-
-  // Update search results when customers data changes
-  useEffect(() => {
-    const q = (customerPhone || '').trim();
-    const isFormFilled = q.length >= 3 && customerName.trim().length > 0;
-    
-    if (showResults && q.length >= 2 && !isSelectingCustomer && !isFormFilled && customers.length > 0) {
-      setSearchResults(customers);
-    } else if (isSelectingCustomer || isFormFilled) {
-      setSearchResults([]);
-    }
-  }, [customers, showResults, customerPhone, customerName, isSelectingCustomer]);
 
   // Auto-expand the service section the moment customer info becomes
   // complete, and collapse it again if the form is cleared. Only reacts to
@@ -281,24 +297,54 @@ export const EnhancedLaundryPOS = () => {
 
   // Handle customer selection from search
   const handleCustomerSelect = (customer: any) => {
+    // Invalidate any in-flight search so it can't reopen/replace the dropdown.
+    searchSeqRef.current++;
     setIsSelectingCustomer(true);
     setShowResults(false);
     setSearchResults([]);
+    setIsNewCustomer(false);
     setCustomerPhone(customer.phone);
     setCustomerName(customer.name);
-    
+
     setTimeout(() => {
       setIsSelectingCustomer(false);
     }, 500);
   };
 
+  // Fast inline "add new customer": no dialog, no page switch. Just splits
+  // the typed text into phone/name, focuses the missing field, and lets the
+  // order submit auto-create the customer (ensureCustomerExists). This is the
+  // answer to "where to add new customer inline".
+  const handleAddNewCustomerFast = () => {
+    searchSeqRef.current++;
+    const typed = (customerPhone || '').trim();
+    const digits = typed.replace(/\D/g, '');
+    setShowResults(false);
+    setSearchResults([]);
+    setIsNewCustomer(true);
+    if (digits.length >= 6) {
+      // Typed digits - keep as phone, jump to name field.
+      setCustomerPhone(digits.slice(-13));
+      requestAnimationFrame(() => nameInputRef.current?.focus());
+      toast.info(`New customer - enter name for ${digits.slice(-10)}`);
+    } else {
+      // Typed a name - keep as name, jump to mobile field.
+      if (typed) setCustomerName(typed);
+      setCustomerPhone('');
+      requestAnimationFrame(() => phoneInputRef.current?.focus());
+      toast.info('New customer - enter 10-digit mobile number');
+    }
+  };
+
   // Clear customer form - also clears the cart, since items added so far were
   // being built up for the customer that's now being cleared.
   const clearCustomerForm = () => {
+    searchSeqRef.current++;
     setCustomerPhone('');
     setCustomerName('');
     setSearchResults([]);
     setShowResults(false);
+    setIsNewCustomer(false);
     setDropOffDate(getJakartaNow());
     setCurrentOrder([]);
     setDynamicItems([]);
@@ -306,12 +352,18 @@ export const EnhancedLaundryPOS = () => {
     setPointsRedeemed(0);
   };
 
-  // Handle phone input blur
-  const handlePhoneInputBlur = () => {
+  // Handle phone input blur - only hide when focus truly leaves the whole
+  // search area (input + dropdown). The old unconditional timeout fired
+  // before tap/click on a result on touch devices, making the list vanish
+  // as the finger landed ("come and go").
+  const handlePhoneInputBlur = (e: React.FocusEvent) => {
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next && dropdownRef.current?.contains(next)) return;
+    // Small delay so a tap on a result (which fires blur first on touch
+    // devices) still lands on the row's onMouseDown handler.
     setTimeout(() => {
       setShowResults(false);
-      setSearchResults([]);
-    }, 200);
+    }, 250);
   };
 
   // Confirm an add-to-cart with a short toast - the cart panel itself is
@@ -616,7 +668,7 @@ export const EnhancedLaundryPOS = () => {
 
     // Show toast notification for pointsts earned if applicable
     if (createdOrder.points_earned && createdOrder.points_earned > 0) {
-      toast.success(`🎉 Customer earned +${createdOrder.points_earned} pointsts!`, {
+      toast.success(`🎉 Customer earned +${createdOrder.points_earned} points!`, {
         style: {
           minWidth: '320px',
           maxWidth: '500px',
@@ -720,15 +772,15 @@ export const EnhancedLaundryPOS = () => {
                 {!isOnline && (
                   <p className={failedSyncCount > 0 ? 'text-destructive' : 'text-pos-warning'}>
                     {currentStore?.enable_offline_mode
-                      ? 'Anda sedang offline - order baru disimpan di perangkat dan akan tersinkron otomatis saat koneksi kembali.'
-                      : 'Anda sedang offline - toko ini belum mengaktifkan mode offline, jadi order baru belum bisa dibuat sampai koneksi kembali.'}
+                      ? 'You are offline - new orders are saved on this device and will sync automatically once you are back online.'
+                      : 'You are offline - offline mode is not enabled for this store, so new orders cannot be created until you are back online.'}
                   </p>
                 )}
                 {pendingSyncCount > 0 && (
-                  <p className="text-muted-foreground">{pendingSyncCount} order menunggu sinkronisasi</p>
+                  <p className="text-muted-foreground">{pendingSyncCount} order(s) waiting to sync</p>
                 )}
                 {failedSyncCount > 0 && (
-                  <p className="font-medium text-destructive">{failedSyncCount} order gagal sinkron - perlu ditinjau di Order History</p>
+                  <p className="font-medium text-destructive">{failedSyncCount} order(s) failed to sync - please review them in Order History</p>
                 )}
               </div>
             </div>
@@ -742,9 +794,9 @@ export const EnhancedLaundryPOS = () => {
           <CardContent className="p-3 sm:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="font-medium text-pos-warning">Belum ada service yang dikonfigurasi</h3>
+                <h3 className="font-medium text-pos-warning">No services configured yet</h3>
                 <p className="text-sm text-pos-warning/80">
-                  Tambahkan service untuk mulai menerima order. Muat contoh service untuk langsung mulai.
+                  Add services to start taking orders. Load sample services to get started quickly.
                 </p>
               </div>
               <div className="flex flex-shrink-0 gap-2">
@@ -753,14 +805,14 @@ export const EnhancedLaundryPOS = () => {
                   disabled={seedDefaultServices.isPending}
                   className="bg-pos-warning text-white hover:bg-pos-warning/90"
                 >
-                  {seedDefaultServices.isPending ? 'Memuat...' : 'Muat Contoh Service'}
+                  {seedDefaultServices.isPending ? 'Loading...' : 'Load Sample Services'}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => navigate('/services')}
                   className="border-pos-warning/40 text-pos-warning hover:bg-pos-warning/10"
                 >
-                  Kelola Service
+                  Manage Services
                 </Button>
               </div>
             </div>
@@ -774,6 +826,11 @@ export const EnhancedLaundryPOS = () => {
           <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
             <User className="h-4 w-4 flex-shrink-0 text-primary sm:h-5 sm:w-5" />
             Customer Information
+            {isNewCustomer && (
+              <Badge variant="outline" className="ml-1 border-green-600/40 text-green-700">
+                New - saved with order
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 p-3 pt-0 sm:space-y-4 sm:p-6 sm:pt-0">
@@ -819,19 +876,43 @@ export const EnhancedLaundryPOS = () => {
                       setShowResults(true);
                     }
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setShowResults(false);
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (searchResults.length === 1) {
+                        handleCustomerSelect(searchResults[0]);
+                      } else if (searchResults.length === 0 && (customerPhone || '').trim().length >= 2) {
+                        handleAddNewCustomerFast();
+                      }
+                    } else if (e.key === 'ArrowDown' && searchResults.length > 0) {
+                      // Move focus into the list so keyboard users can Tab/Enter a row.
+                      const first = dropdownRef.current?.querySelector<HTMLElement>('[data-customer-row]');
+                      first?.focus();
+                    }
+                  }}
                   className="pl-10 pr-10"
                 />
                 {showResults && (
                   <div ref={dropdownRef} className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {customersLoading && (
-                      <div className="p-3 text-sm text-muted-foreground">Searching...</div>
+                      <div className="p-3 text-sm text-muted-foreground min-h-[52px] flex items-center">Searching...</div>
                     )}
                     {!customersLoading && searchResults.map((customer) => (
                       <div
                         key={customer.id}
-                        className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0"
+                        data-customer-row
+                        tabIndex={0}
+                        className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0 focus:bg-secondary focus:outline-none"
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleCustomerSelect(customer)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleCustomerSelect(customer);
+                          }
+                        }}
                       >
                         <div className="font-medium">{customer.name}</div>
                         <div className="text-sm text-muted-foreground">+91 {customer.phone?.slice(-10)}</div>
@@ -839,21 +920,14 @@ export const EnhancedLaundryPOS = () => {
                     ))}
                     {!customersLoading && searchResults.length === 0 && (customerPhone || '').trim().length >= 2 && (
                       <div
-                        className="p-3 hover:bg-secondary cursor-pointer flex items-center gap-2 text-primary font-medium"
+                        className="p-3 hover:bg-secondary cursor-pointer flex items-center gap-2 text-primary font-medium focus:bg-secondary focus:outline-none"
+                        tabIndex={0}
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          // Use typed text as new customer: if digits, treat as phone, else as name hint
-                          const typed = (customerPhone || '').trim();
-                          const digits = typed.replace(/\D/g, '');
-                          if (digits.length >= 6) {
-                            // keep phone, focus name field for new customer
-                            setShowResults(false);
-                            toast.info(`New customer - please enter name for ${digits.slice(-10)}`);
-                          } else {
-                            setCustomerName(typed);
-                            setCustomerPhone('');
-                            setShowResults(false);
-                            toast.info('New customer - please enter 10-digit mobile number');
+                        onClick={handleAddNewCustomerFast}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddNewCustomerFast();
                           }
                         }}
                       >
@@ -864,7 +938,7 @@ export const EnhancedLaundryPOS = () => {
                   </div>
                 )}
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">Search existing by mobile or name. If not found, add as new.</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">Search by mobile or name, Enter to pick. No match? Click "Add as new customer" - it saves automatically with the order.</p>
             </div>
             <div>
               <div className="grid grid-cols-1 gap-3">
@@ -875,6 +949,7 @@ export const EnhancedLaundryPOS = () => {
                   <Input
                     placeholder="10-digit mobile, e.g. 98765 43210"
                     inputMode="numeric"
+                    ref={phoneInputRef}
                     value={customerPhone && /[a-zA-Z]/.test(customerPhone) ? '' : customerPhone}
                     onChange={(e) => {
                       const v = e.target.value.replace(/[^\d+ ]/g, '').slice(0, 13);
@@ -891,6 +966,7 @@ export const EnhancedLaundryPOS = () => {
                   </label>
                   <Input
                     placeholder="Enter full name, e.g. Jay Pathade"
+                    ref={nameInputRef}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                   />

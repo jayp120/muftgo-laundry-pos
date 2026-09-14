@@ -1,8 +1,9 @@
 {
-  "name": "MuftGo Laundry POS - Laundry Billing for India",
+  "name": "MuftGo Laundry POS",
   "short_name": "MuftGo Laundry",
   "description": "Modern POS for Indian laundry shops in Pune: orders, UPI billing, WhatsApp alerts & reports. A product by MuftGo.",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0e7490",
@@ -18,13 +19,13 @@
       "src": "/favicon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["business", "productivity", "finance"],

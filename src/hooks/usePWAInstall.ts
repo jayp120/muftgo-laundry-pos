@@ -50,8 +50,10 @@ export const usePWAInstall = () => {
     // Listen for the appinstalled event
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Check for iOS Safari "Add to Home Screen" prompt
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // Check for iOS Safari "Add to Home Screen" prompt (includes iPadOS 13+ which reports as Macintosh)
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document);
     const isInStandaloneMode = (window.navigator as any).standalone;
     
     if (isIOS && !isInStandaloneMode) {
@@ -70,8 +72,10 @@ export const usePWAInstall = () => {
     }
 
     if (!deferredPrompt) {
-      // For iOS Safari, show instructions
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      // For iOS Safari, show instructions (includes iPadOS 13+)
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document);
       if (isIOS) {
         alert('To install this app on your iOS device, tap the Share button and then "Add to Home Screen".');
         return;
@@ -90,6 +94,8 @@ export const usePWAInstall = () => {
       setIsInstallable(false);
       setDeferredPrompt(null);
     } else {
+      // Prompt is consumed after one use per spec - clear so next attempt waits for a fresh event
+      setDeferredPrompt(null);
     }
   };
 

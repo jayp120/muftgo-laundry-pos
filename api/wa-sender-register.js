@@ -71,8 +71,9 @@ export default async function handler(req, res) {
   };
 
   // Mirrors WhatsAppClient.formatPhoneNumber (src/integrations/whatsapp/client.ts)
-  // so "check" comparisons line up regardless of how the client formatted input.
-  const normalizePhone = (phoneNumber, defaultCountryCode = '62') => {
+  // and normalizePhoneIN (src/lib/india.ts) for India (+91) so "check"
+  // comparisons line up regardless of how the client formatted input.
+  const normalizePhone = (phoneNumber, defaultCountryCode = '91') => {
     const cleaned = String(phoneNumber || '').replace(/\D/g, '');
     if (cleaned.startsWith(defaultCountryCode)) return cleaned;
     if (cleaned.startsWith('0')) return `${defaultCountryCode}${cleaned.substring(1)}`;

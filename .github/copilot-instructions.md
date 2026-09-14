@@ -44,7 +44,7 @@ npm run lint
 
 **Manual Validation Scenarios:**
 - Test the landing page loads at `http://localhost:8080/`
-- Verify login page is accessible via "Masuk" button
+- Verify login page is accessible via "Sign In" button
 - Confirm PWA install prompts appear on mobile/compatible browsers
 - Test navigation between public routes (/, /login, /install)
 

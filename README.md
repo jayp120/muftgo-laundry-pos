@@ -9,7 +9,7 @@ Built for Indian laundry workflow: per-kg / per-piece / combo services, ₹ INR 
 - Web (PWA): `https://muftgo.com` (deploy `dist/` to Vercel)
 - Local dev: `npm run dev` → http://localhost:8080
 - Prod preview: `npm run build && npm run preview` → http://localhost:4173
-- Android APK: `https://muftgo.com/muftgo-laundry-latest.apk` (built via GitHub Actions `build-android` / `release-android`)
+- Android APK: `https://github.com/jayp120/muftgo-laundry-pos/releases/latest/download/muftgo-laundry-latest.apk` (built via GitHub Actions `build-android` / `release-android`; same-origin alias `/muftgo-laundry-latest.apk` via vercel.json when this app serves the domain)
 
 ## Setup
 

@@ -22,7 +22,8 @@ import './LandingPage.css';
 const FONT_LINK_ID = 'tk-landing-fonts';
 
 /** MuftGo-owned Android build - published on every tagged release. */
-const ANDROID_APK_URL = 'https://muftgo.com/muftgo-laundry-latest.apk';
+import { APK_DOWNLOAD_URL, GITHUB_RELEASES_URL } from '@/lib/app-links';
+const ANDROID_APK_URL = APK_DOWNLOAD_URL;
 
 const AndroidIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -461,7 +462,8 @@ export const LandingPage: React.FC = () => {
                 <a href={ANDROID_APK_URL} className="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold rounded-sm bg-[var(--tk-ink)] text-[var(--tk-paper)]">
                   <AndroidIcon className="h-4 w-4" /> Download Android APK
                 </a>
-                <span className="text-xs opacity-70 text-center">Signed release · updates in-place · from muftgo.com</span>
+                <span className="text-xs opacity-70 text-center">Signed release · updates in-place · via GitHub Releases</span>
+                <a href={GITHUB_RELEASES_URL} className="text-xs opacity-70 text-center underline">All versions & release notes</a>
               </div>
             </div>
           </div>

@@ -31,13 +31,8 @@ export default async function handler(req, res) {
 
     const { to, message, from } = req.body;
     
-    if (!to || !message) {
-      return res.status(400).json({
-        success: false,
-        error: 'Both "to" and "message" fields are required'
-      });
-    }
-
+    // Check server configuration first so connection tests can distinguish
+    // "server misconfigured" (500) from "bad request" (400).
     // Get WhatsApp API configuration from environment variables
     const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL ;
     const WHATSAPP_USERNAME = process.env.WHATSAPP_USERNAME || 'admin';
@@ -47,6 +42,13 @@ export default async function handler(req, res) {
       return res.status(500).json({
         success: false,
         error: 'WhatsApp API configuration incomplete'
+      });
+    }
+
+    if (!to || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Both "to" and "message" fields are required'
       });
     }
 

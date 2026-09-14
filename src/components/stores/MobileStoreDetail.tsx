@@ -41,11 +41,11 @@ export const MobileStoreDetail: React.FC<MobileStoreDetailProps> = ({ store, onB
           </TabsTrigger>
           <TabsTrigger value="staff" className="flex flex-col items-center gap-1 py-2">
             <Users className="h-4 w-4" />
-            <span className="text-xs">Staf</span>
+            <span className="text-xs">Staff</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex flex-col items-center gap-1 py-2">
             <Settings className="h-4 w-4" />
-            <span className="text-xs">Setelan</span>
+            <span className="text-xs">Settings</span>
           </TabsTrigger>
           <TabsTrigger value="whatsapp" className="relative flex flex-col items-center gap-1 py-2">
             <MessageCircle className="h-4 w-4" />
@@ -56,7 +56,7 @@ export const MobileStoreDetail: React.FC<MobileStoreDetailProps> = ({ store, onB
                   aria-hidden="true"
                   className="absolute top-1 right-3 h-2 w-2 rounded-full bg-destructive"
                 />
-                <span className="sr-only">Nomor pengirim WhatsApp belum terdaftar</span>
+                <span className="sr-only">WhatsApp sender number not registered yet</span>
               </>
             )}
           </TabsTrigger>

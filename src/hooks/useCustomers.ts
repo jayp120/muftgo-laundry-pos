@@ -64,7 +64,7 @@ export const useCustomers = () => {
     const clean = sanitizeLikeQuery(query);
     if (!clean || clean.length < 2) {
       setCustomers([]);
-      return;
+      return [];
     }
     if (!currentStore) {
       toast({
@@ -72,15 +72,16 @@ export const useCustomers = () => {
         description: "No store selected",
         variant: "destructive",
       });
-      return;
+      return [];
     }
 
     setLoading(true);
     try {
       if (!navigator.onLine) {
         const cached = await offlineDb.cachedCustomers.get(currentStore.store_id);
-        setCustomers(filterCachedCustomers(cached?.customers ?? [], clean));
-        return;
+        const fb = filterCachedCustomers(cached?.customers ?? [], clean);
+        setCustomers(fb);
+        return fb;
       }
 
       const { data, error } = await supabase
@@ -93,12 +94,14 @@ export const useCustomers = () => {
 
       if (error) throw error;
       setCustomers(data || []);
+      return data || [];
     } catch (error) {
       console.error('Error searching customers:', error);
       let cacheFallbackSucceeded = false;
+      let fb: Customer[] = [];
       try {
         const cached = await offlineDb.cachedCustomers.get(currentStore.store_id);
-        const fb = filterCachedCustomers(cached?.customers ?? [], clean);
+        fb = filterCachedCustomers(cached?.customers ?? [], clean);
         setCustomers(fb);
         cacheFallbackSucceeded = fb.length > 0;
       } catch {
@@ -114,6 +117,7 @@ export const useCustomers = () => {
           variant: "destructive",
         });
       }
+      return fb;
     } finally {
       setLoading(false);
     }

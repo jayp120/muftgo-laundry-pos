@@ -57,10 +57,21 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
     return methodMap[method.toLowerCase()] || method.toUpperCase();
   };
 
+  const getReceiptBaseUrl = (): string => {
+    if (import.meta.env.VITE_RECEIPT_BASE_URL) return import.meta.env.VITE_RECEIPT_BASE_URL;
+    if (import.meta.env.VITE_APP_ORIGIN) return import.meta.env.VITE_APP_ORIGIN;
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      // Never use the native WebView's synthetic origin in a shared link.
+      if (!origin.startsWith('capacitor://') && !origin.includes('localhost')) return origin;
+    }
+    return 'https://muftgo.com';
+  };
+
   const waLink = customerPhone
     ? buildWaMeLink(
         customerPhone,
-        `Hi ${customerName}! Your laundry order ${orderNumber} of ₹${totalAmount.toLocaleString('en-IN')} is confirmed. View receipt: ${typeof window !== 'undefined' ? window.location.origin : ''}/receipt/${orderId}`
+        `Hi ${customerName}! Your laundry order ${orderNumber} of ₹${totalAmount.toLocaleString('en-IN')} is confirmed. View receipt: ${getReceiptBaseUrl()}/receipt/${orderId}`
       )
     : null;
 

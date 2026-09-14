@@ -46,7 +46,7 @@ const initialFormData: ServiceFormData = {
 };
 
 const ServiceManagement = () => {
-  usePageTitle('Manajemen Service');
+  usePageTitle('Service Management');
 
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -90,15 +90,15 @@ const ServiceManagement = () => {
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
-      case 'wash': return 'Cuci';
+      case 'wash': return 'Wash';
       case 'dry': return 'Dry Clean';
-      case 'special': return 'Khusus';
-      case 'ironing': return 'Setrika';
-      case 'folding': return 'Lipat';
-      case 'detergent': return 'Deterjen';
-      case 'perfume': return 'Parfum';
-      case 'softener': return 'Pelembut';
-      case 'other_goods': return 'Produk Lainnya';
+      case 'special': return 'Special';
+      case 'ironing': return 'Ironing';
+      case 'folding': return 'Folding';
+      case 'detergent': return 'Detergent';
+      case 'perfume': return 'Perfume';
+      case 'softener': return 'Fabric Softener';
+      case 'other_goods': return 'Other Products';
       default: return category;
     }
   };
@@ -111,10 +111,10 @@ const ServiceManagement = () => {
   const getPriceEntries = (service: ServiceData) => {
     const entries: { type: keyof typeof PRICE_STYLES; label: string }[] = [];
     if (service.supports_kilo) {
-      entries.push({ type: 'kilo', label: `Rp${service.kilo_price?.toLocaleString('en-IN') || '0'}/kg` });
+      entries.push({ type: 'kilo', label: `₹${service.kilo_price?.toLocaleString('en-IN') || '0'}/kg` });
     }
     if (service.supports_unit) {
-      entries.push({ type: 'unit', label: `Rp${service.unit_price?.toLocaleString('en-IN') || '0'}/unit` });
+      entries.push({ type: 'unit', label: `₹${service.unit_price?.toLocaleString('en-IN') || '0'}/unit` });
     }
     return entries;
   };
@@ -126,7 +126,7 @@ const ServiceManagement = () => {
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Nama service wajib diisi",
+        description: "Service name is required",
         variant: "destructive",
       });
       return;
@@ -135,7 +135,7 @@ const ServiceManagement = () => {
     if (!formData.supports_unit && !formData.supports_kilo) {
       toast({
         title: "Error",
-        description: "Service harus mendukung setidaknya satu metode harga",
+        description: "Service must support at least one pricing method",
         variant: "destructive",
       });
       return;
@@ -144,7 +144,7 @@ const ServiceManagement = () => {
     if (formData.supports_unit && formData.unit_price <= 0) {
       toast({
         title: "Error",
-        description: "Harga per unit harus lebih dari 0",
+        description: "Price per unit must be greater than 0",
         variant: "destructive",
       });
       return;
@@ -153,7 +153,7 @@ const ServiceManagement = () => {
     if (formData.supports_kilo && formData.kilo_price <= 0) {
       toast({
         title: "Error",
-        description: "Harga per kilo harus lebih dari 0",
+        description: "Price per kg must be greater than 0",
         variant: "destructive",
       });
       return;
@@ -197,7 +197,7 @@ const ServiceManagement = () => {
   };
 
   const handleDelete = async (serviceId: string): Promise<boolean> => {
-    if (!confirm('Apakah Anda yakin ingin menghapus service ini?')) {
+    if (!confirm('Are you sure you want to delete this service?')) {
       return false;
     }
 
@@ -221,12 +221,12 @@ const ServiceManagement = () => {
     <div className="space-y-6">
       {/* Page Header */}
       {isMobile ? (
-        <MobilePageHeader title="Manajemen Service" onBack={() => navigate('/home')} />
+        <MobilePageHeader title="Service Management" onBack={() => navigate('/home')} />
       ) : (
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Manajemen Service</h1>
-            <p className="text-muted-foreground">Kelola service dan harga laundry Anda</p>
+            <h1 className="text-3xl font-bold">Service Management</h1>
+            <p className="text-muted-foreground">Manage your laundry services and pricing</p>
           </div>
           <Button
             onClick={openCreateDialog}
@@ -234,7 +234,7 @@ const ServiceManagement = () => {
             disabled={isProcessing}
           >
             <Plus className="h-4 w-4" />
-            <span>Tambah Service</span>
+            <span>Add Service</span>
           </Button>
         </div>
       )}
@@ -245,7 +245,7 @@ const ServiceManagement = () => {
           onClick={openCreateDialog}
           disabled={isProcessing}
           size="icon"
-          aria-label="Tambah Service"
+          aria-label="Add Service"
           className="fixed right-4 z-40 h-14 w-14 rounded-full shadow-medium"
           style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
         >
@@ -254,7 +254,7 @@ const ServiceManagement = () => {
       )}
 
       {/* Loading State */}
-      {loading && <SectionLoading text="Memuat service..." />}
+      {loading && <SectionLoading text="Loading services..." />}
 
       {/* Error State */}
       {error && (
@@ -263,9 +263,9 @@ const ServiceManagement = () => {
             <div className="flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
               <div>
-                <h3 className="font-medium text-destructive">Error memuat service</h3>
+                <h3 className="font-medium text-destructive">Failed to load services</h3>
                 <p className="text-sm text-destructive/80">
-                  Silakan coba refresh halaman atau hubungi dukungan jika masalah berlanjut.
+                  Please try refreshing the page or contact support if the issue persists.
                 </p>
               </div>
             </div>
@@ -280,21 +280,21 @@ const ServiceManagement = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <Settings className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">Tidak ada service</h3>
+                <h3 className="text-lg font-medium mb-2">No services</h3>
                 <p className="text-muted-foreground mb-4">
-                  Mulai dengan membuat service laundry pertama Anda atau muat beberapa contoh service.
+                  Get started by creating your first laundry service or load sample services.
                 </p>
                 <div className="flex justify-center gap-2">
                   <Button onClick={openCreateDialog}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Buat Service
+                    Create Service
                   </Button>
                   <Button
                     variant="outline"
                     onClick={seedInitialServices}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? 'Memuat...' : 'Muat Contoh Service'}
+                    {isProcessing ? 'Loading...' : 'Load Sample Services'}
                   </Button>
                 </div>
               </CardContent>
@@ -329,7 +329,7 @@ const ServiceManagement = () => {
                     <div className="truncate text-sm text-muted-foreground">
                       {getCategoryLabel(service.category)}
                       {service.duration_value > 0 &&
-                        ` · ${service.duration_value} ${service.duration_unit === 'hours' ? 'jam' : 'hari'}`}
+                        ` · ${service.duration_value} ${service.duration_unit === 'hours' ? 'hrs' : 'days'}`}
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
@@ -356,7 +356,7 @@ const ServiceManagement = () => {
               <div className="space-y-2">
                 <h4 className="font-medium flex items-center">
                   <DollarSign className="h-4 w-4 mr-1" />
-                  Opsi Harga
+                  Pricing Options
                 </h4>
                 {service.supports_unit && (
                   <div className="flex justify-between text-sm">
@@ -374,8 +374,8 @@ const ServiceManagement = () => {
 
               {/* Duration */}
               <div className="flex justify-between text-sm">
-                <span>Durasi:</span>
-                <span>{service.duration_value} {service.duration_unit === 'hours' ? 'jam' : 'hari'}</span>
+                <span>Duration:</span>
+                <span>{service.duration_value} {service.duration_unit === 'hours' ? 'hrs' : 'days'}</span>
               </div>
 
               {/* Actions */}
@@ -396,7 +396,7 @@ const ServiceManagement = () => {
                   className="flex-1"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Hapus
+                  Delete
                 </Button>
               </div>
             </CardContent>
@@ -412,7 +412,7 @@ const ServiceManagement = () => {
         <FormDialogContent className={isMobile ? 'max-h-[85vh] flex flex-col' : 'max-w-2xl'}>
           <FormDialogHeader>
             <FormDialogTitle>
-              {editingService ? 'Edit Service' : 'Buat Service Baru'}
+              {editingService ? 'Edit Service' : 'Create New Service'}
             </FormDialogTitle>
           </FormDialogHeader>
 
@@ -426,17 +426,17 @@ const ServiceManagement = () => {
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Nama Service*</Label>
+                <Label htmlFor="name">Service Name*</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="contoh: Cuci Regular"
+                  placeholder="e.g. Regular Wash"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="category">Kategori*</Label>
+                <Label htmlFor="category">Category*</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value: any) => {
@@ -455,34 +455,34 @@ const ServiceManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="wash">Cuci</SelectItem>
+                    <SelectItem value="wash">Wash</SelectItem>
                     <SelectItem value="dry">Dry Clean</SelectItem>
-                    <SelectItem value="ironing">Setrika</SelectItem>
-                    <SelectItem value="folding">Lipat</SelectItem>
-                    <SelectItem value="special">Khusus</SelectItem>
-                    <SelectItem value="detergent">Deterjen (Produk)</SelectItem>
-                    <SelectItem value="perfume">Parfum (Produk)</SelectItem>
-                    <SelectItem value="softener">Pelembut (Produk)</SelectItem>
-                    <SelectItem value="other_goods">Produk Lainnya</SelectItem>
+                    <SelectItem value="ironing">Ironing</SelectItem>
+                    <SelectItem value="folding">Folding</SelectItem>
+                    <SelectItem value="special">Special</SelectItem>
+                    <SelectItem value="detergent">Detergent (Product)</SelectItem>
+                    <SelectItem value="perfume">Perfume (Product)</SelectItem>
+                    <SelectItem value="softener">Fabric Softener (Product)</SelectItem>
+                    <SelectItem value="other_goods">Other Products</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="description">Deskripsi</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Deskripsi singkat service"
+                placeholder="Short service description"
                 rows={3}
               />
             </div>
 
             {/* Pricing Options */}
             <div className="space-y-4">
-              <h3 className="font-medium">Opsi Harga</h3>
+              <h3 className="font-medium">Pricing Options</h3>
 
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
@@ -493,12 +493,12 @@ const ServiceManagement = () => {
                       setFormData({ ...formData, supports_unit: checked as boolean })
                     }
                   />
-                  <Label htmlFor="supports_unit">Mendukung harga per unit</Label>
+                  <Label htmlFor="supports_unit">Supports per-unit pricing</Label>
                 </div>
 
                 {formData.supports_unit && (
                   <div>
-                    <Label htmlFor="unit_price">Harga per unit (Rp)</Label>
+                    <Label htmlFor="unit_price">Price per unit (₹)</Label>
                     <Input
                       id="unit_price"
                       type="number"
@@ -519,12 +519,12 @@ const ServiceManagement = () => {
                       setFormData({ ...formData, supports_kilo: checked as boolean })
                     }
                   />
-                  <Label htmlFor="supports_kilo">Mendukung harga per berat</Label>
+                  <Label htmlFor="supports_kilo">Supports weight-based pricing</Label>
                 </div>
 
                 {formData.supports_kilo && (
                   <div>
-                    <Label htmlFor="kilo_price">Harga per kilogram (Rp)</Label>
+                    <Label htmlFor="kilo_price">Price per kilogram (₹)</Label>
                     <Input
                       id="kilo_price"
                       type="number"
@@ -542,7 +542,7 @@ const ServiceManagement = () => {
             {/* Duration */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="duration_value">Durasi</Label>
+                <Label htmlFor="duration_value">Duration</Label>
                 <Input
                   id="duration_value"
                   type="number"
@@ -552,7 +552,7 @@ const ServiceManagement = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="duration_unit">Satuan</Label>
+                <Label htmlFor="duration_unit">Unit</Label>
                 <Select
                   value={formData.duration_unit}
                   onValueChange={(value: any) => setFormData({ ...formData, duration_unit: value })}
@@ -561,8 +561,8 @@ const ServiceManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hours">Jam</SelectItem>
-                    <SelectItem value="days">Hari</SelectItem>
+                    <SelectItem value="hours">Hours</SelectItem>
+                    <SelectItem value="days">Days</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -581,7 +581,7 @@ const ServiceManagement = () => {
                 }}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Hapus Service
+                Delete Service
               </Button>
             )}
 
@@ -593,10 +593,10 @@ const ServiceManagement = () => {
                 onClick={() => setShowCreateDialog(false)}
                 disabled={loading}
               >
-                Batal
+                Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Menyimpan...' : editingService ? 'Perbarui Service' : 'Buat Service'}
+                {loading ? 'Saving...' : editingService ? 'Update Service' : 'Create Service'}
               </Button>
             </div>
           </form>

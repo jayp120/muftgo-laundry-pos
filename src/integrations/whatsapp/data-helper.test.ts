@@ -5,7 +5,7 @@ import type { StoreInfo } from './types';
 const baseStoreInfo: StoreInfo = {
   name: 'Test Store',
   address: 'Test Address',
-  phone: '6281234567890',
+  phone: '919876543210',
 };
 
 describe('WhatsAppDataHelper.getWhatsAppSender', () => {
@@ -13,9 +13,9 @@ describe('WhatsAppDataHelper.getWhatsAppSender', () => {
     const result = WhatsAppDataHelper.getWhatsAppSender({
       ...baseStoreInfo,
       wa_use_store_number: true,
-      wa_sender_id: '6281111111111',
+      wa_sender_id: '919111111111',
     });
-    expect(result).toBe('6281111111111');
+    expect(result).toBe('919111111111');
   });
 
   it('returns undefined when the feature is enabled but no sender is registered', () => {
@@ -31,7 +31,7 @@ describe('WhatsAppDataHelper.getWhatsAppSender', () => {
     const result = WhatsAppDataHelper.getWhatsAppSender({
       ...baseStoreInfo,
       wa_use_store_number: false,
-      wa_sender_id: '6281111111111',
+      wa_sender_id: '919111111111',
     });
     expect(result).toBeUndefined();
   });
@@ -39,7 +39,7 @@ describe('WhatsAppDataHelper.getWhatsAppSender', () => {
   it('never falls back to stores.phone - phone is display-only', () => {
     const result = WhatsAppDataHelper.getWhatsAppSender({
       ...baseStoreInfo,
-      phone: '6289999999999',
+      phone: '919999999999',
       wa_use_store_number: true,
       wa_sender_id: undefined,
     });

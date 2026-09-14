@@ -3,7 +3,7 @@ import { whatsAppService } from '@/integrations/whatsapp';
 import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig } from '@/lib/whatsapp-config';
 import { useToast } from '@/hooks/use-toast';
 import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
-import type { NotificationResult, OrderCreatedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
+import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
 
 /**
  * Custom hook for WhatsApp integration
@@ -114,6 +114,47 @@ export const useWhatsApp = () => {
       return result;
     } catch (error) {
       console.error('Error sending order created notification:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  };
+
+  /**
+   * Send order completed notification
+   */
+  const notifyOrderCompleted = async (
+    phoneNumber: string,
+    orderData: OrderCompletedData
+  ): Promise<NotificationResult> => {
+    if (!whatsAppFeatures.notifyOnOrderCompleted) {
+      return { success: true, messageId: 'feature-disabled' };
+    }
+
+    if (whatsAppFeatures.developmentMode) {
+      return { success: true, messageId: 'dev-mode-id' };
+    }
+
+    if (!isConfigured) {
+      console.warn('WhatsApp not configured, skipping order completed notification');
+      return { success: false, error: 'Service not configured' };
+    }
+
+    try {
+      const fromNumber = orderData.storeInfo
+        ? WhatsAppDataHelper.getWhatsAppSender(orderData.storeInfo)
+        : undefined;
+
+      const result = await whatsAppService.notifyOrderCompleted(phoneNumber, orderData, fromNumber);
+
+      if (!result.success) {
+        console.error('Failed to send order completed notification:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error sending order completed notification:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -273,6 +314,7 @@ export const useWhatsApp = () => {
     isTestingConnection,
     testConnection,
     notifyOrderCreated,
+    notifyOrderCompleted,
     notifyOrderReadyForPickup,
     notifyPaymentConfirmation,
     sendCustomMessage,

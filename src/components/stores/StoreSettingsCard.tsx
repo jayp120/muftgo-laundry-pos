@@ -47,7 +47,7 @@ export const StoreSettingsCard: React.FC = () => {
         console.error('Error fetching store settings:', error);
         toast({
           title: "Error",
-          description: "Gagal memuat pengaturan toko",
+          description: "Failed to load store settings",
           variant: "destructive",
         });
         return;
@@ -64,7 +64,7 @@ export const StoreSettingsCard: React.FC = () => {
       console.error('Error fetching store settings:', error);
       toast({
         title: "Error",
-        description: "Gagal memuat pengaturan toko",
+        description: "Failed to load store settings",
         variant: "destructive",
       });
     } finally {
@@ -88,14 +88,14 @@ export const StoreSettingsCard: React.FC = () => {
       });
 
       toast({
-        title: "Pengaturan Tersimpan",
-        description: "Pengaturan toko berhasil diperbarui",
+        title: "Settings Saved",
+        description: "Store settings updated successfully",
       });
     } catch (error) {
       console.error('Error saving store settings:', error);
       toast({
         title: "Error",
-        description: "Gagal menyimpan pengaturan toko",
+        description: "Failed to save store settings",
         variant: "destructive",
       });
     } finally {
@@ -128,7 +128,7 @@ export const StoreSettingsCard: React.FC = () => {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
-          <p className="text-muted-foreground">Tidak ada toko yang dipilih</p>
+          <p className="text-muted-foreground">No store selected</p>
         </CardContent>
       </Card>
     );
@@ -138,7 +138,7 @@ export const StoreSettingsCard: React.FC = () => {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
-          <p className="text-muted-foreground">Hanya pemilik toko yang dapat mengubah pengaturan</p>
+          <p className="text-muted-foreground">Only the store owner can change settings</p>
         </CardContent>
       </Card>
     );
@@ -149,7 +149,7 @@ export const StoreSettingsCard: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Pengaturan Toko
+          Store Settings
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -164,17 +164,17 @@ export const StoreSettingsCard: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <QrCode className="h-5 w-5 text-muted-foreground" />
                 <Label htmlFor="enable-qr" className="text-base font-medium">
-                  QR Code Struk
+                  Receipt QR Code
                 </Label>
               </div>
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg">
                 <div className="space-y-1 flex-1">
                   <Label htmlFor="enable-qr" className="font-normal">
-                    Tampilkan QR Code pada Struk
+                    Show QR Code on Receipts
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Tampilkan QR code untuk pembayaran digital pada struk customer
+                    Show a QR code for digital payments on customer receipts
                   </p>
                 </div>
                 <Switch
@@ -192,11 +192,11 @@ export const StoreSettingsCard: React.FC = () => {
                     <QrCode className="h-5 w-5 text-blue-600 mt-0.5" />
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-blue-900">
-                        Konfigurasi QR Code
+                        QR Code Setup
                       </p>
                       <p className="text-sm text-blue-700">
-                        Pastikan untuk mengunggah gambar QR code pembayaran Anda sebagai <code>/qrcode.png</code> di folder public.
-                        QR code akan ditampilkan pada semua struk digital saat diaktifkan.
+                        Please upload your payment QR code image as <code>/qrcode.png</code> in the public folder.
+                        The QR code will appear on all digital receipts when enabled.
                       </p>
                     </div>
                   </div>
@@ -209,17 +209,17 @@ export const StoreSettingsCard: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <Star className="h-5 w-5 text-amber-500" />
                 <Label htmlFor="enable-points" className="text-base font-medium">
-                  Sistem Loyalty Points
+                  Loyalty Points System
                 </Label>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg">
                 <div className="space-y-1 flex-1">
                   <Label htmlFor="enable-points" className="font-normal">
-                    Aktifkan Reward Poin
+                    Enable Points Rewards
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Berikan points kepada customer untuk setiap order yang dibayar (1 points per kg/unit)
+                    Reward customers with points for every paid order (1 point per kg/item)
                   </p>
                 </div>
                 <Switch
@@ -237,13 +237,13 @@ export const StoreSettingsCard: React.FC = () => {
                     <Star className="h-5 w-5 text-amber-600 mt-0.5 fill-amber-500" />
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-amber-900">
-                        Sistem Points Aktif
+                        Points System Active
                       </p>
                       <ul className="text-sm text-amber-700 space-y-1">
-                        <li>• Customer mendapat 1 points per kilogram untuk service berbasis berat</li>
-                        <li>• Customer mendapat 1 points per unit untuk service berbasis jumlah</li>
-                        <li>• Points secara otomatis diberikan saat pembayaran selesai</li>
-                        <li>• Saldo points terlihat pada struk dan profil customer</li>
+                        <li>• Customers earn 1 point per kg for weight-based services</li>
+                        <li>• Customers earn 1 point per item for per-item services</li>
+                        <li>• Points are awarded automatically once payment is complete</li>
+                        <li>• Points balance appears on receipts and customer profiles</li>
                       </ul>
                     </div>
                   </div>
@@ -256,17 +256,17 @@ export const StoreSettingsCard: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <WifiOff className="h-5 w-5 text-muted-foreground" />
                 <Label htmlFor="enable-offline-mode" className="text-base font-medium">
-                  Mode Offline
+                  Offline Mode
                 </Label>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg">
                 <div className="space-y-1 flex-1">
                   <Label htmlFor="enable-offline-mode" className="font-normal">
-                    Izinkan Buat Order Saat Offline
+                    Allow Orders While Offline
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Staf tetap bisa membuat order baru saat internet toko putus - order tersimpan di perangkat dan otomatis sinkron saat koneksi kembali
+                    Staff can keep creating new orders when the store's internet is down - orders are saved on the device and sync automatically once you are back online
                   </p>
                 </div>
                 <Switch
@@ -284,13 +284,13 @@ export const StoreSettingsCard: React.FC = () => {
                     <WifiOff className="h-5 w-5 text-slate-600 mt-0.5" />
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-slate-900">
-                        Mode Offline Aktif
+                        Offline Mode Active
                       </p>
                       <ul className="text-sm text-slate-700 space-y-1">
-                        <li>• Hanya berlaku untuk pembuatan order baru - status/pembayaran order tetap butuh koneksi internet</li>
-                        <li>• Penukaran points tidak tersedia untuk order yang dibuat offline</li>
-                        <li>• Staf harus login ulang jika sesi mereka habis saat offline sebelum bisa membuat order baru</li>
-                        <li>• Harga service yang dipakai offline mengikuti data terakhir saat perangkat masih online</li>
+                        <li>• Applies only to new order creation - order status and payments still need an internet connection</li>
+                        <li>• Points redemption is unavailable for orders created offline</li>
+                        <li>• Staff must log in again if their session expires while offline before creating new orders</li>
+                        <li>• Offline prices follow the latest data synced while the device was still online</li>
                       </ul>
                     </div>
                   </div>
@@ -308,12 +308,12 @@ export const StoreSettingsCard: React.FC = () => {
                 {saving ? (
                   <>
                     <LoadingSpinner size="sm" variant="white" />
-                    Menyimpan...
+                    Saving...
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    Simpan Pengaturan
+                    Save Settings
                   </>
                 )}
               </Button>

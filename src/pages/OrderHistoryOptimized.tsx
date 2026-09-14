@@ -50,7 +50,7 @@ export const OrderHistory = () => {
   const { notifyOrderCreated } = useWhatsApp();
   const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
-  // Deep-link support (e.g. Home page's "Order Batal" tile): ?status=cancelled
+  // Deep-link support (e.g. Home page's "Cancelled Orders" tile): ?status=cancelled
   // preselects the execution-status filter and widens the date range so
   // matching orders aren't hidden behind the default "today" window.
   const initialExecutionStatus = searchParams.get('status') || 'all';
@@ -478,7 +478,7 @@ export const OrderHistory = () => {
 
   const handleRetryOfflineOrder = useCallback(async (id: string) => {
     if (!navigator.onLine) {
-      toast.error('Tidak ada koneksi internet. Sinkronisasi akan berjalan otomatis saat koneksi kembali.');
+      toast.error('No internet connection. Sync will run automatically when you are back online.');
       return;
     }
     setRetryingOrderId(id);
@@ -486,7 +486,7 @@ export const OrderHistory = () => {
       await retryOfflineOrderNow(id, notifyOrderCreated);
     } catch (error) {
       console.error('Error retrying offline order:', id, error);
-      toast.error('Gagal menyinkronkan order. Silakan coba lagi.');
+      toast.error('Failed to sync order. Please try again.');
     } finally {
       setRetryingOrderId(null);
     }
@@ -510,7 +510,7 @@ export const OrderHistory = () => {
               <div>
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Order History</h1>
                 <p className="text-sm text-muted-foreground hidden sm:block">
-                  Kelola dan lacak semua order customer
+                  Manage and track all customer orders
                 </p>
               </div>
             </div>
@@ -538,7 +538,7 @@ export const OrderHistory = () => {
                 className="flex items-center space-x-2"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Muat Ulang</span>
+                <span>Reload</span>
               </Button>
               <Button
                 variant="default"
@@ -560,7 +560,7 @@ export const OrderHistory = () => {
               <div className="relative order-2 sm:order-1">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Cari berdasarkan nama customer, telepon, atau ID order (min 2 karakter)..."
+                  placeholder="Search by customer name, phone, or order ID (min 2 characters)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-full sm:w-80"
@@ -580,7 +580,7 @@ export const OrderHistory = () => {
                 )}
                 {searchTerm !== debouncedSearchTerm && (
                   <div className="absolute -bottom-6 left-0 text-xs text-muted-foreground">
-                    Mencari...
+                    Searching...
                   </div>
                 )}
               </div>
@@ -609,14 +609,14 @@ export const OrderHistory = () => {
                         <h4 className="font-medium">Filter</h4>
                         {hasActiveFilters && (
                           <Button variant="ghost" size="sm" onClick={clearFilters}>
-                            Hapus Semua
+                            Clear All
                           </Button>
                         )}
                       </div>
 
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Status Eksekusi</label>
+                      <label className="text-sm font-medium mb-2 block">Order Status</label>
                       <Select
                         value={pendingFilters.executionStatus}
                         onValueChange={(value) => setPendingFilters(prev => ({ ...prev, executionStatus: value }))}
@@ -625,12 +625,12 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Semua Status</SelectItem>
+                          <SelectItem value="all">All Statuses</SelectItem>
                           <SelectItem value="in_queue">In Queue</SelectItem>
-                          <SelectItem value="in_progress">Sedang Diproses</SelectItem>
-                          <SelectItem value="ready_for_pickup">Siap Diambil</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -645,11 +645,11 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Semua Status</SelectItem>
-                          <SelectItem value="pending">Menunggu</SelectItem>
-                          <SelectItem value="down_payment">DP</SelectItem>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="down_payment">Advance</SelectItem>
                           <SelectItem value="completed">Paid</SelectItem>
-                          <SelectItem value="refunded">Dikembalikan</SelectItem>
+                          <SelectItem value="refunded">Refunded</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -664,7 +664,7 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Semua Metode</SelectItem>
+                          <SelectItem value="all">All Methods</SelectItem>
                           <SelectItem value="cash">Cash</SelectItem>
                           <SelectItem value="upi">UPI</SelectItem>
                           <SelectItem value="transfer">Transfer</SelectItem>
@@ -673,7 +673,7 @@ export const OrderHistory = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Rentang Tanggal</label>
+                      <label className="text-sm font-medium mb-2 block">Date Range</label>
                       <Select
                         value={pendingFilters.dateRange}
                         onValueChange={(value) => {
@@ -688,12 +688,12 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Semua Waktu</SelectItem>
-                          <SelectItem value="today">Hari Ini</SelectItem>
-                          <SelectItem value="yesterday">Kemarin</SelectItem>
-                          <SelectItem value="week">Minggu Ini</SelectItem>
-                          <SelectItem value="month">Bulan Ini</SelectItem>
-                          <SelectItem value="custom">Rentang Khusus</SelectItem>
+                          <SelectItem value="all">All Time</SelectItem>
+                          <SelectItem value="today">Today</SelectItem>
+                          <SelectItem value="yesterday">Yesterday</SelectItem>
+                          <SelectItem value="week">This Week</SelectItem>
+                          <SelectItem value="month">This Month</SelectItem>
+                          <SelectItem value="custom">Custom Range</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -701,7 +701,7 @@ export const OrderHistory = () => {
                     {/* Custom Date Range Picker - shown when custom is selected */}
                     {pendingFilters.dateRange === 'custom' && (
                       <div>
-                        <label className="text-sm font-medium mb-2 block">Pilih Rentang Tanggal</label>
+                        <label className="text-sm font-medium mb-2 block">Select Date Range</label>
                         <DateRangePicker
                           date={pendingCustomDateRange}
                           onDateChange={setPendingCustomDateRange}
@@ -718,7 +718,7 @@ export const OrderHistory = () => {
                         className="rounded"
                       />
                       <label htmlFor="overdue" className="text-sm font-medium">
-                        Tampilkan hanya order terlambat
+                        Show overdue orders only
                       </label>
                     </div>
                   </div>
@@ -729,7 +729,7 @@ export const OrderHistory = () => {
                           onClick={applyFilters}
                           className="w-full"
                         >
-                          Terapkan Filter
+                          Apply Filters
                         </Button>
                       </div>
                     </div>
@@ -747,16 +747,16 @@ export const OrderHistory = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Clock className="h-4 w-4" />
-                    Menunggu Sinkronisasi ({pendingOfflineOrders.length})
+                    Pending Sync ({pendingOfflineOrders.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {pendingOfflineOrders.map((order) => {
                     const statusLabel: Record<string, string> = {
-                      queued: 'Menunggu sinkronisasi',
-                      syncing: 'Sedang sinkron...',
-                      error_retryable: 'Mencoba lagi otomatis',
-                      error_permanent: 'Gagal - perlu tindakan',
+                      queued: 'Waiting to sync',
+                      syncing: 'Syncing...',
+                      error_retryable: 'Retrying automatically',
+                      error_permanent: 'Failed - action needed',
                     };
                     return (
                       <div key={order.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
@@ -767,7 +767,7 @@ export const OrderHistory = () => {
                           </p>
                           {order.status === 'error_permanent' && order.lastError && (
                             <p className="text-xs text-destructive">
-                              Sinkronisasi gagal pada tahap {order.lastError.step}. Hubungi admin jika berulang.
+                              Sync failed at step {order.lastError.step}. Contact admin if this keeps happening.
                             </p>
                           )}
                         </div>
@@ -778,7 +778,7 @@ export const OrderHistory = () => {
                             disabled={retryingOrderId === order.id}
                             onClick={() => handleRetryOfflineOrder(order.id)}
                           >
-                            {retryingOrderId === order.id ? 'Mencoba...' : 'Coba Lagi'}
+                            {retryingOrderId === order.id ? 'Retrying...' : 'Try Again'}
                           </Button>
                         )}
                       </div>
@@ -803,19 +803,19 @@ export const OrderHistory = () => {
               </CardHeader> */}
               <CardContent className="p-2 sm:p-6">
                 {loading && filteredOrders.length === 0 ? (
-                  <SectionLoading text="Memuat order..." />
+                  <SectionLoading text="Loading orders..." />
                 ) : filteredOrders.length === 0 ? (
                   <div className="text-center py-8">
                     <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Tidak ada order ditemukan</h3>
+                    <h3 className="text-lg font-medium mb-2">No orders found</h3>
                     <p className="text-muted-foreground mb-4">
                       {hasActiveFilters
-                        ? "Coba sesuaikan filter atau kata kunci pencarian"
-                        : "Belum ada order yang dibuat"}
+                        ? "Try adjusting your filters or search keywords"
+                        : "No orders created yet"}
                     </p>
                     {hasActiveFilters && (
                       <Button variant="outline" onClick={clearFilters}>
-                        Hapus Filter
+                        Clear Filters
                       </Button>
                     )}
                   </div>
@@ -850,9 +850,9 @@ export const OrderHistory = () => {
                       className="px-8 py-2"
                     >
                       {loading ? (
-                        <InlineLoading text="Memuat..." />
+                        <InlineLoading text="Loading..." />
                       ) : (
-                        'Muat Lebih Banyak Order'
+                        'Load More Orders'
                       )}
                     </Button>
                   </div>
@@ -861,7 +861,7 @@ export const OrderHistory = () => {
                 {/* Summary */}
                 {filteredOrders.length > 0 && (
                   <div className="text-center text-sm text-muted-foreground mt-4 mb-4">
-                    Menampilkan {filteredOrders.length} dari {totalCount} order
+                    Showing {filteredOrders.length} of {totalCount} orders
                   </div>
                 )}
               </CardContent>

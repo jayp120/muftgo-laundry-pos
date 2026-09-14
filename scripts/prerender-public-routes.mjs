@@ -20,13 +20,13 @@ const ROUTES = [
     path: '/login',
     title: 'Login - MuftGo Laundry POS',
     description:
-      'Masuk atau daftar sebagai pemilik toko laundry di MuftGo Laundry POS. Gratis dipakai, tanpa kartu kredit, siap pakai dalam 5 menit.',
+      'Sign in or create a laundry store owner account on MuftGo Laundry POS. Free to use, no credit card, ready in 5 minutes.',
   },
   {
     path: '/install',
-    title: 'Cara Install Aplikasi MuftGo Laundry POS - Android, iOS, Desktop',
+    title: 'How to Install the MuftGo Laundry POS App - Android, iOS, Desktop',
     description:
-      'Panduan instal MuftGo Laundry POS sebagai aplikasi (PWA) di Android, iOS, Windows, dan Mac. Akses offline dan tampilan seperti aplikasi native langsung dari layar utama.',
+      'Guide to installing MuftGo Laundry POS as an app (PWA) on Android, iOS, Windows, and Mac. Offline access and a native-like experience right from the home screen.',
   },
 ];
 

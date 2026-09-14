@@ -16,7 +16,7 @@ import { Banknote, QrCode, Smartphone, Gift, Percent } from 'lucide-react';
 import { useCustomerPoints } from '@/hooks/useCustomerPoints';
 import { useStore } from '@/contexts/StoreContext';
 
-// Points to currency conversion rate (1 pointst = 100 Rupiah)
+// Points to currency conversion rate (1 point = ₹100)
 export const POINTS_TO_CURRENCY_RATE = 100;
 
 interface PayLaterPaymentDialogProps {
@@ -162,7 +162,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
     });
   };
 
-  const quickCashOptions = [50000, 100000, 150000, 200000];
+  const quickCashOptions = [100, 500, 1000, 2000, 5000];
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString('en-IN');
@@ -182,9 +182,9 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" aria-describedby="pay-later-payment-description">
         <DialogHeader>
-          <DialogTitle>Payment Order</DialogTitle>
+          <DialogTitle>Collect Payment</DialogTitle>
           <DialogDescription id="pay-later-payment-description">
-            Proses pembayaran untuk order {customerName}
+            Collect payment for {customerName}'s order
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleFormSubmit}>
@@ -209,7 +209,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
             {/* Discount Section */}
             {currentStore?.enable_points && (
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Discount (Opsional)</Label>
+                <Label className="text-sm font-medium">Discount (Optional)</Label>
                 <Tabs value={discountType} onValueChange={(v) => handleDiscountTypeChange(v as 'custom' | 'points')}>
                   <TabsList className="grid w-full grid-cols-2 h-8">
                     <TabsTrigger value="custom" className="flex items-center gap-1 text-xs">
@@ -226,33 +226,33 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
                       type="number"
                       value={customDiscount}
                       onChange={(e) => handleCustomDiscountChange(e.target.value)}
-                      placeholder="Enter diskon (Rp)"
+                      placeholder="Enter discount (₹)"
                       className="text-center h-8 text-sm"
                       min={0}
                       max={totalAmount}
                     />
                     {discountError && (
-                      <p className="text-xs text-red-600">Discount tidak boleh melebihi total pembayaran</p>
+                      <p className="text-xs text-red-600">Discount cannot exceed the total amount</p>
                     )}
                   </TabsContent>
                   <TabsContent value="points" className="space-y-1 mt-2">
                     {hasPoints ? (
                       <>
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                          <span>Points tersedia: {pointsAvailable}</span>
-                          <span>1 points = ₹{POINTS_TO_CURRENCY_RATE}</span>
+                          <span>Points available: {pointsAvailable}</span>
+                          <span>1 point = ₹{POINTS_TO_CURRENCY_RATE}</span>
                         </div>
                         <Input
                           type="number"
                           value={pointsToRedeem}
                           onChange={(e) => handlePointsToRedeemChange(e.target.value)}
-                          placeholder="Enter jumlah points"
+                          placeholder="Enter points to redeem"
                           className="text-center h-8 text-sm"
                           min={0}
                           max={pointsAvailable}
                         />
                         {pointsError && (
-                          <p className="text-xs text-red-600">Points tidak mencukupi! Maksimal: {pointsAvailable} points</p>
+                          <p className="text-xs text-red-600">Not enough points! Maximum: {pointsAvailable} points</p>
                         )}
                         {parseFloat(pointsToRedeem) > 0 && !pointsError && (
                           <p className="text-xs text-green-600 text-center">
@@ -262,7 +262,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
                       </>
                     ) : (
                       <p className="text-xs text-muted-foreground text-center py-2">
-                        Customer belum memiliki points
+                        Customer has no points yet
                       </p>
                     )}
                   </TabsContent>
@@ -328,7 +328,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
                     value={cashReceived}
                     onChange={(e) => setCashReceived(e.target.value)}
                     className="text-lg h-12 text-center"
-                    placeholder="Contoh: 50000"
+                    placeholder="e.g. 5000"
                     min={finalAmount}
                   />
                 </div>
@@ -343,7 +343,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
                       onClick={() => setCashReceived(String(amount))}
                       disabled={amount < finalAmount}
                     >
-                      {amount >= 1000000 ? `${amount / 1000000}jt` : `${amount / 1000}rb`}
+                      {`₹${amount.toLocaleString('en-IN')}`}
                     </Button>
                   ))}
                 </div>
@@ -359,18 +359,18 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
 
                 {parseFloat(cashReceived) >= finalAmount && change === 0 && (
                   <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-700 font-medium">Uang Pas</p>
+                    <p className="text-sm text-blue-700 font-medium">Exact Amount</p>
                     <p className="text-lg font-semibold text-blue-600">
-                      Tidak ada kembalian
+                      No change due
                     </p>
                   </div>
                 )}
 
                 {parseFloat(cashReceived) > 0 && parseFloat(cashReceived) < finalAmount && (
                   <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                    <p className="text-sm text-red-700 font-medium">Uang Kurang</p>
+                    <p className="text-sm text-red-700 font-medium">Short Payment</p>
                     <p className="text-lg font-semibold text-red-600">
-                      Kurang ₹{formatCurrency(finalAmount - parseFloat(cashReceived))}
+                      Short by ₹{formatCurrency(finalAmount - parseFloat(cashReceived))}
                     </p>
                   </div>
                 )}
@@ -380,14 +380,14 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Batal
+              Cancel
             </Button>
             <Button
               type="submit"
               disabled={!isSubmitValid() || isSubmitting}
               className="bg-green-600 hover:bg-green-700"
             >
-              {isSubmitting ? 'Memproses...' : 'Konfirmasi Payment'}
+              {isSubmitting ? 'Processing...' : 'Confirm Payment'}
             </Button>
           </DialogFooter>
         </form>

@@ -547,16 +547,16 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   }
   
   if (receiptData.storePhone) {
-    commands.push(textToBytes(centerText(`No. HP ${receiptData.storePhone}`, paperWidth)));
+    commands.push(textToBytes(centerText(`Mobile ${receiptData.storePhone}`, paperWidth)));
     commands.push(ESC_POS.CRLF);
   }
   
   // QR Code notice (if enabled)
   // if (receiptData.enableQr) {
   //   commands.push(ESC_POS.CRLF);
-  //   commands.push(textToBytes(centerText('[QR Code tersedia di nota digital]', paperWidth)));
+  //   commands.push(textToBytes(centerText('[QR Code available on digital receipt]', paperWidth)));
   //   commands.push(ESC_POS.CRLF);
-  //   commands.push(textToBytes(centerText('Scan untuk pembayaran digital', paperWidth)));
+  //   commands.push(textToBytes(centerText('Scan for digital payment', paperWidth)));
   //   commands.push(ESC_POS.CRLF);
   // }
   
@@ -584,7 +584,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   if (receiptData.customerPhone) {
     // Mask phone number for privacy
     const maskedPhone = receiptData.customerPhone.replace(/(\d{2,3})\d{4}(\d{2,3})/, '$1****$2');
-    commands.push(textToBytes(`No. HP: ${maskedPhone}`));
+    commands.push(textToBytes(`Mobile: ${maskedPhone}`));
     commands.push(ESC_POS.CRLF);
   }
 
@@ -606,11 +606,11 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     commands.push(ESC_POS.ALIGN_CENTER);
     commands.push(ESC_POS.BOLD_ON);
     commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
-    commands.push(textToBytes(centerText(firstItem.service_name || 'LAYANAN KILOAN', paperWidth / 2)));
+    commands.push(textToBytes(centerText(firstItem.service_name || 'LAUNDRY SERVICE', paperWidth / 2)));
     commands.push(ESC_POS.CRLF);
     commands.push(ESC_POS.BOLD_OFF);
     commands.push(ESC_POS.SIZE_NORMAL);
-    commands.push(textToBytes(centerText(`(${(firstItem.service_name || 'KILOAN REGULER').toUpperCase()})`, paperWidth)));
+    commands.push(textToBytes(centerText(`(${(firstItem.service_name || 'REGULAR WASH').toUpperCase()})`, paperWidth)));
     commands.push(ESC_POS.CRLF);
     commands.push(ESC_POS.ALIGN_LEFT);
   }
@@ -621,8 +621,8 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   const orderDate = receiptData.orderDate ? new Date(receiptData.orderDate) : new Date();
   const formatDate = (date: Date) => {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
     ];
     
     // Ensure we have a valid date
@@ -635,32 +635,32 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     const year = date.getFullYear();
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${day} ${month} ${year}, ${hours}:${minutes} WIB`;
+    return `${day} ${month} ${year}, ${hours}:${minutes} IST`;
   };
   
-  commands.push(textToBytes(`Diterima: ${formatDate(orderDate)}`));
+  commands.push(textToBytes(`Received: ${formatDate(orderDate)}`));
   commands.push(ESC_POS.CRLF);
   
   // Status info
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes('STATUS LAYANAN:'));
+  commands.push(textToBytes('SERVICE STATUS:'));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
   const statusMap: { [key: string]: string } = {
-    'completed': 'SUDAH DIAMBIL',
-    'ready_for_pickup': 'SIAP DIAMBIL',
-    'in_progress': 'SEDANG DIKERJAKAN',
-    'in_queue': 'DALAM ANTRIAN'
+    'completed': 'COLLECTED',
+    'ready_for_pickup': 'READY FOR PICKUP',
+    'in_progress': 'IN PROGRESS',
+    'in_queue': 'IN QUEUE'
   };
   
-  const statusText = statusMap[receiptData.executionStatus] || 'DALAM ANTRIAN';
+  const statusText = statusMap[receiptData.executionStatus] || 'IN QUEUE';
   commands.push(textToBytes(`Status: ${statusText}`));
   commands.push(ESC_POS.CRLF);
   
   if (receiptData.estimatedCompletion) {
     const completionDate = new Date(receiptData.estimatedCompletion);
-    commands.push(textToBytes(`Siap Diambil: ${formatDate(completionDate)}`));
+    commands.push(textToBytes(`Ready for pickup: ${formatDate(completionDate)}`));
     commands.push(ESC_POS.CRLF);
   }
   
@@ -671,7 +671,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   
   // Items header
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes('DETAIL TRANSAKSI:'));
+  commands.push(textToBytes('TRANSACTION DETAILS:'));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
@@ -682,7 +682,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   // Service Items
   if (serviceItems.length > 0) {
     commands.push(ESC_POS.BOLD_ON);
-    commands.push(textToBytes('LAYANAN:'));
+    commands.push(textToBytes('SERVICES:'));
     commands.push(ESC_POS.CRLF);
     commands.push(ESC_POS.BOLD_OFF);
     
@@ -717,7 +717,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   // Product Items
   if (productItems.length > 0) {
     commands.push(ESC_POS.BOLD_ON);
-    commands.push(textToBytes('PRODUK & BARANG:'));
+    commands.push(textToBytes('PRODUCTS & ITEMS:'));
     commands.push(ESC_POS.CRLF);
     commands.push(ESC_POS.BOLD_OFF);
     
@@ -762,14 +762,14 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
 
     // Points redeemed info (if discount from pointsts)
     if (receiptData.pointsRedeemed && receiptData.pointsRedeemed > 0) {
-      const pointstsText = `  (${receiptData.pointsRedeemed} points ditukar)`;
+      const pointstsText = `  (${receiptData.pointsRedeemed} points redeemed)`;
       commands.push(textToBytes(pointsText));
       commands.push(ESC_POS.CRLF);
     }
   }
 
   if (receiptData.taxAmount && receiptData.taxAmount > 0) {
-    const taxText = `Pajak: ₹${receiptData.taxAmount.toLocaleString('en-IN')}`;
+    const taxText = `Tax: ₹${receiptData.taxAmount.toLocaleString('en-IN')}`;
     const spacesToAdd = Math.max(0, paperWidth - taxText.length);
     commands.push(textToBytes(' '.repeat(spacesToAdd) + taxText));
     commands.push(ESC_POS.CRLF);
@@ -790,13 +790,13 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes('PEMBAYARAN:'));
+  commands.push(textToBytes('PAYMENT:'));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
   // Payment status
-  const paymentStatusText = receiptData.paymentStatus === 'completed' ? 'LUNAS' : 
-                            receiptData.paymentStatus === 'down_payment' ? 'DP (BELUM LUNAS)' : 'BELUM LUNAS';
+  const paymentStatusText = receiptData.paymentStatus === 'completed' ? 'PAID' : 
+                            receiptData.paymentStatus === 'down_payment' ? 'ADVANCE (UNPAID)' : 'UNPAID';
   commands.push(textToBytes(`Status: ${paymentStatusText}`));
   commands.push(ESC_POS.CRLF);
   
@@ -804,7 +804,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   if (receiptData.paymentMethod) {
     const methodText = receiptData.paymentMethod.toUpperCase() + 
                       (receiptData.paymentStatus === 'down_payment' ? ' (DP)' : '');
-    commands.push(textToBytes(`Metode: ${methodText}`));
+    commands.push(textToBytes(`Method: ${methodText}`));
     commands.push(ESC_POS.CRLF);
     
     // Down payment details
@@ -812,7 +812,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
         (receiptData.paymentAmount && receiptData.paymentAmount < receiptData.totalAmount)) {
       commands.push(ESC_POS.CRLF);
       commands.push(ESC_POS.BOLD_ON);
-      commands.push(textToBytes(`Bayar DP: ₹${(receiptData.paymentAmount || 0).toLocaleString('en-IN')}`));
+      commands.push(textToBytes(`Advance Paid: ₹${(receiptData.paymentAmount || 0).toLocaleString('en-IN')}`));
       commands.push(ESC_POS.CRLF);
       commands.push(ESC_POS.BOLD_OFF);
       
@@ -844,24 +844,24 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   
   commands.push(ESC_POS.ALIGN_CENTER);
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes(centerText('TERIMA KASIH!', paperWidth)));
+  commands.push(textToBytes(centerText('THANK YOU!', paperWidth)));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
-  commands.push(textToBytes(centerText('Semoga puas dengan service kami', paperWidth)));
+  commands.push(textToBytes(centerText('We hope you are happy with our service', paperWidth)));
   commands.push(ESC_POS.CRLF);
   
   // Important notes
   commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText('--- PENTING ---', paperWidth)));
+  commands.push(textToBytes(centerText('--- IMPORTANT ---', paperWidth)));
   commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText('Simpan nota ini sebagai bukti', paperWidth)));
+  commands.push(textToBytes(centerText('Keep this receipt as proof', paperWidth)));
   commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText('pengambilan laundry', paperWidth)));
+  commands.push(textToBytes(centerText('of laundry pickup', paperWidth)));
   commands.push(ESC_POS.CRLF);
   
   // Digital receipt info
   // commands.push(ESC_POS.CRLF);
-  // commands.push(textToBytes(centerText('Nota digital tersedia di:', paperWidth)));
+  // commands.push(textToBytes(centerText('Digital receipt available at:', paperWidth)));
   // commands.push(ESC_POS.CRLF);
   // commands.push(textToBytes(centerText(`/receipt/${receiptData.orderId}`, paperWidth)));
   // commands.push(ESC_POS.CRLF);

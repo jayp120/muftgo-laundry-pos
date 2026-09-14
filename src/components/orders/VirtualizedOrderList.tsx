@@ -115,23 +115,23 @@ const OrderItem = memo(({ index, style, data }: {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
                 <div className="truncate">
-                  <span className="font-medium">Telepon: </span>
+                  <span className="font-medium">Phone: </span>
                   {order.customer_phone}
                 </div>
                 <div className="truncate">
-                  <span className="font-medium">ID Order: </span>
+                  <span className="font-medium">Order ID: </span>
                   {order.id.slice(-8)}
                 </div>
                 <div className="truncate">
-                  <span className="font-medium">Dibuat: </span>
+                  <span className="font-medium">Created: </span>
                   {formatDate(order.created_at)}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
                 <div>
-                  <span className="font-medium">Item: </span>
-                  {order.order_items?.length || 0} item
+                  <span className="font-medium">Items: </span>
+                  {order.order_items?.length || 0} item(s)
                 </div>
                 <div>
                   <span className="font-medium">Total: </span>
@@ -146,13 +146,13 @@ const OrderItem = memo(({ index, style, data }: {
                 <div className="mb-3 p-2 bg-pos-warning/10 border border-pos-warning/30 rounded-lg">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-pos-warning font-medium">DP Dibayar: </span>
+                      <span className="text-pos-warning font-medium">Advance Paid: </span>
                       <span className="font-bold text-pos-warning">
                         ₹{order.payment_amount.toLocaleString('en-IN')}
                       </span>
                     </div>
                     <div>
-                      <span className="text-destructive/80 font-medium">Sisa: </span>
+                      <span className="text-destructive/80 font-medium">Balance: </span>
                       <span className="font-bold text-destructive">
                         ₹{(order.total_amount - order.payment_amount).toLocaleString('en-IN')}
                       </span>
@@ -172,7 +172,7 @@ const OrderItem = memo(({ index, style, data }: {
                     className="flex items-center justify-center space-x-1 text-xs"
                   >
                     <Eye className="h-3 w-3" />
-                    <span>Lihat</span>
+                    <span>View</span>
                   </Button>
 
                   {data.onViewReceipt && (
@@ -183,7 +183,7 @@ const OrderItem = memo(({ index, style, data }: {
                       className="flex items-center justify-center space-x-1 text-xs border-primary/30 text-primary hover:bg-primary/5"
                     >
                       <Receipt className="h-3 w-3" />
-                      <span>Struk</span>
+                      <span>Receipt</span>
                     </Button>
                   )}
                 </div>
@@ -197,7 +197,7 @@ const OrderItem = memo(({ index, style, data }: {
                     className="w-full flex items-center justify-center space-x-1 text-xs border-primary/30 text-primary hover:bg-primary/5"
                   >
                     <Printer className="h-3 w-3" />
-                    <span>Cetak Struk</span>
+                    <span>Print Receipt</span>
                   </Button>
                 )}
 
@@ -213,12 +213,12 @@ const OrderItem = memo(({ index, style, data }: {
                     {isButtonLoading(order.id, 'resend_notification') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Mengirim...</span>
+                        <span>Sending...</span>
                       </>
                     ) : (
                       <>
                         <MessageSquare className="h-3 w-3" />
-                        <span>Kirim Ulang WA</span>
+                        <span>Resend WhatsApp</span>
                       </>
                     )}
                   </Button>
@@ -236,10 +236,10 @@ const OrderItem = memo(({ index, style, data }: {
                     {isButtonLoading(order.id, 'execution_in_progress') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                        Memproses...
+                        Processing...
                       </>
                     ) : (
-                      <>🔄 Mulai Proses</>
+                      <>🔄 Start Processing</>
                     )}
                   </Button>
                 )}
@@ -254,10 +254,10 @@ const OrderItem = memo(({ index, style, data }: {
                     {isButtonLoading(order.id, 'execution_ready_for_pickup') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                        Memproses...
+                        Processing...
                       </>
                     ) : (
-                      <>📦 Siap Diambil</>
+                      <>📦 Ready for Pickup</>
                     )}
                   </Button>
                 )}
@@ -272,7 +272,7 @@ const OrderItem = memo(({ index, style, data }: {
                     {isButtonLoading(order.id, 'execution_completed') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                        Memproses...
+                        Processing...
                       </>
                     ) : (
                       <>✅ Mark as Picked Up</>
@@ -292,10 +292,10 @@ const OrderItem = memo(({ index, style, data }: {
                     {isButtonLoading(order.id, 'payment') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                        Memproses...
+                        Processing...
                       </>
                     ) : (
-                      <>💳 Proses Payment</>
+                      <>💳 Collect Payment</>
                     )}
                   </Button>
                 )}
@@ -310,10 +310,10 @@ const OrderItem = memo(({ index, style, data }: {
                     {isButtonLoading(order.id, 'payment') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                        Memproses...
+                        Processing...
                       </>
                     ) : (
-                      <>💰 Completedkan Payment DP</>
+                      <>💰 Collect Balance Payment</>
                     )}
                   </Button>
                 )}
