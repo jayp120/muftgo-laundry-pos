@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authService, User } from '@/services/authService';
 import { useToast } from '@/hooks/use-toast';
+import { isOwnerRole, type UserRole } from '@/lib/permissions';
+
+type SignUpRole = UserRole | 'staff' | 'laundry_owner';
 
 interface AuthContextType {
   user: User | null;
@@ -8,7 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: (credential: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner', storeData?: { name: string; address?: string; phone?: string; }) => Promise<void>;
+  signUp: (email: string, password: string, fullName?: string, phone?: string, role?: SignUpRole, storeData?: { name: string; address?: string; phone?: string; }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
@@ -82,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner', storeData?: { name: string; address?: string; phone?: string; }) => {
+  const signUp = async (email: string, password: string, fullName?: string, phone?: string, role?: SignUpRole, storeData?: { name: string; address?: string; phone?: string; }) => {
     try {
       setLoading(true);
       const user = await authService.signUp(email, password, fullName, phone, role, storeData);
@@ -90,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Success",
-        description: role === 'laundry_owner' && storeData ? 
+        description: (role && isOwnerRole(role)) && storeData ? 
           `Account created successfully! Your store "${storeData.name}" has been set up.` :
           "Account created successfully!",
       });

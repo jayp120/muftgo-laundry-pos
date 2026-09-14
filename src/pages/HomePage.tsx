@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Coachmark, useCoachmark } from '@/components/ui/coachmark';
 import { MobileHomeView } from '@/components/home/MobileHomeView';
+import { canAccess, canSeeRevenue } from '@/lib/permissions';
 import {
   Building2,
   Plus,
@@ -125,7 +126,8 @@ export const HomePage: React.FC = () => {
       icon: Plus,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => navigate('/pos')
+      onClick: () => navigate('/pos'),
+      hidden: !canAccess('pos', user?.role)
     },
     {
       id: 'order-list',
@@ -141,7 +143,8 @@ export const HomePage: React.FC = () => {
       icon: Users,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => navigate('/customers')
+      onClick: () => navigate('/customers'),
+      hidden: !canAccess('customers', user?.role)
     },
     {
       id: 'services',
@@ -150,7 +153,7 @@ export const HomePage: React.FC = () => {
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
       onClick: () => navigate('/services'),
-      hidden: !isOwner
+      hidden: !canAccess('services', user?.role)
     },
     {
       id: 'expenses',
@@ -158,7 +161,8 @@ export const HomePage: React.FC = () => {
       icon: Package,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => navigate('/expenses')
+      onClick: () => navigate('/expenses'),
+      hidden: !canAccess('expenses', user?.role)
     },
     {
       id: 'cancelled-orders',
@@ -178,12 +182,18 @@ export const HomePage: React.FC = () => {
   // reachable from this page (mirrors the sidebar's Manage section).
   const moreMenuItems = [
     { id: 'home', title: 'Home', icon: HomeIcon, onClick: () => navigate('/home') },
-    { id: 'new-order', title: 'New Order', icon: Plus, onClick: () => navigate('/pos') },
+    ...(canAccess('pos', user?.role)
+      ? [{ id: 'new-order', title: 'New Order', icon: Plus, onClick: () => navigate('/pos') }]
+      : []),
     ...gridActions.map((action) => ({ id: action.id, title: action.title, icon: action.icon, onClick: action.onClick })),
-    ...(isOwner
+    ...(canAccess('stores', user?.role)
       ? [
           { id: 'stores', title: 'Store Management', icon: Building2, onClick: () => navigate('/stores') },
           { id: 'whatsapp-broadcast', title: 'WhatsApp Broadcast', icon: MessageSquare, onClick: () => navigate('/whatsapp-broadcast') },
+        ]
+      : []),
+    ...(canAccess('revenue', user?.role)
+      ? [
           { id: 'revenue-report', title: 'Revenue Report', icon: TrendingUp, onClick: () => navigate('/revenue-report') },
         ]
       : []),
@@ -204,9 +214,10 @@ export const HomePage: React.FC = () => {
       title: 'New Order',
       icon: Plus,
       active: false,
-      onClick: () => navigate('/pos')
+      onClick: () => navigate('/pos'),
+      hidden: !canAccess('pos', user?.role)
     },
-    isOwner
+    canAccess('revenue', user?.role)
       ? {
           id: 'reports',
           title: 'Reports',
@@ -250,6 +261,8 @@ export const HomePage: React.FC = () => {
         onCreateOrder={() => navigate('/pos')}
         gridActions={gridActions}
         moreMenuItems={moreMenuItems}
+        showRevenue={canSeeRevenue(user?.role)}
+        showCreateOrder={canAccess('pos', user?.role)}
       />
     );
   }
@@ -283,7 +296,8 @@ export const HomePage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Getting-started checklist (new stores) OR revenue cards (activated stores) */}
+        {/* Getting-started checklist (new stores) OR revenue cards (activated stores).
+            Revenue figures are owner + manager only. */}
         {showOnboarding ? (
           <Card className="shadow-lg border-0">
             <CardContent className="p-5">
@@ -343,7 +357,7 @@ export const HomePage: React.FC = () => {
               </Button>
             </CardContent>
           </Card>
-        ) : (
+        ) : canSeeRevenue(user?.role) ? (
           <div className="grid grid-cols-2 gap-3">
             <Card className="shadow-md border-0">
               <CardContent className="p-4">
@@ -374,16 +388,16 @@ export const HomePage: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-        )}
+        ) : null}
 
         {/* Primary action: full-width hero. New stores use the checklist CTA instead. */}
-        {!showOnboarding && (
+        {!showOnboarding && canAccess('pos', user?.role) && (
           <button
             onClick={() => navigate('/pos')}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-500 px-4 py-4 font-semibold text-white shadow-md transition-shadow hover:shadow-lg active:scale-[0.99]"
           >
             <Plus className="h-5 w-5" />
-            Buat New Order
+            Create New Order
           </button>
         )}
 

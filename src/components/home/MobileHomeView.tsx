@@ -37,6 +37,10 @@ interface MobileHomeViewProps {
   onCreateOrder: () => void;
   gridActions: QuickAction[];
   moreMenuItems: QuickAction[];
+  /** Owner + manager only - revenue hidden for counter/worker. */
+  showRevenue?: boolean;
+  /** Hidden for worker (no billing). */
+  showCreateOrder?: boolean;
 }
 
 export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
@@ -56,6 +60,8 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
   onCreateOrder,
   gridActions,
   moreMenuItems,
+  showRevenue = true,
+  showCreateOrder = true,
 }) => {
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -137,7 +143,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
               </Button>
             </CardContent>
           </Card>
-        ) : (
+        ) : showRevenue ? (
           <Card className="border-0 shadow-medium">
             <CardContent className="grid grid-cols-2 divide-x divide-border p-4">
               <div className="pr-4">
@@ -171,9 +177,9 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
               </div>
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
-        {!showOnboarding && (
+        {!showOnboarding && showCreateOrder && (
           <Button onClick={onCreateOrder} variant="pos" size="lg" className="w-full rounded-2xl">
             <Plus className="h-5 w-5" />
             Create New Order

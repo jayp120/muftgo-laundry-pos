@@ -11,6 +11,7 @@ import { Loader2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { getDefaultPath } from '@/lib/permissions';
 import { PageLoading } from '@/components/ui/loading-spinner';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
@@ -47,10 +48,12 @@ export const Login: React.FC = () => {
   const loginForm = useForm<LoginForm>();
   const signUpForm = useForm<SignUpForm>();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - each role lands on its home screen
   if (user) {
-    const from = location.state?.from?.pathname || '/home';
-    return <Navigate to={from} replace />;
+    const fallback = getDefaultPath(user.role);
+    const from = location.state?.from?.pathname;
+    const target = from && from !== '/login' && from !== '/' ? from : fallback;
+    return <Navigate to={target} replace />;
   }
 
   const handleLogin = async (data: LoginForm) => {
@@ -67,7 +70,10 @@ export const Login: React.FC = () => {
   const handleSignUp = async (data: SignUpForm) => {
     try {
       setIsLoading(true);
-      const role = 'laundry_owner';
+      // Public signup ALWAYS creates an owner (superadmin) + their store.
+      // Staff accounts (manager/counter/worker) are created by the owner
+      // inside Store Management - never here.
+      const role = 'owner';
       const storeData = {
         name: data.storeName,
         address: data.storeAddress || undefined,

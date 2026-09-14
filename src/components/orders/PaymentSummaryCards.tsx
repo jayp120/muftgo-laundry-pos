@@ -61,7 +61,7 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
 
   const summaryCards = [
     {
-      title: 'Total Dibayar',
+      title: 'Total Paid',
       value: metrics.totalPaid,
       icon: Wallet,
       bgColor: 'bg-green-50',
@@ -77,7 +77,7 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
       textColor: 'text-orange-700',
     },
     {
-      title: 'Dibayar UPI',
+      title: 'Paid via UPI',
       value: metrics.totalUpi,
       icon: QrCode,
       bgColor: 'bg-blue-50',
@@ -85,7 +85,7 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
       textColor: 'text-blue-700',
     },
     {
-      title: 'Dibayar Cash',
+      title: 'Paid via Cash',
       value: metrics.totalCash,
       icon: Banknote,
       bgColor: 'bg-purple-50',

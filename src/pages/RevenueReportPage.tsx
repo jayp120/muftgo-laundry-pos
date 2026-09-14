@@ -6,11 +6,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useRevenueSummary } from '@/hooks/useRevenue';
+import { useStore } from '@/contexts/StoreContext';
 import { CalendarIcon, Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { enIN as localeEnIN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { SectionLoading } from '@/components/ui/loading-spinner';
+import { toast } from 'sonner';
 
 type DateRangePreset = 'today' | '7days' | '1month' | '6months' | 'custom';
 
@@ -100,6 +102,8 @@ export const RevenueReportPage = () => {
 
   const dateRange = getDateRange(selectedPreset, customStartDate, customEndDate);
   const { data: revenueSummary, isLoading } = useRevenueSummary(dateRange.start, dateRange.end);
+  const { currentStore } = useStore();
+  const [isExporting, setIsExporting] = useState(false);
 
   const handlePresetChange = (preset: DateRangePreset) => {
     setSelectedPreset(preset);
@@ -109,39 +113,82 @@ export const RevenueReportPage = () => {
     }
   };
 
-  const handleExportCSV = () => {
-    if (!revenueSummary) return;
+  // Quote every cell (₹ amounts contain commas) and prefix a BOM so Excel
+  // renders ₹ correctly instead of "â‚¹".
+  const csvCell = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 
-    const csvContent = [
-      ['Business Revenue Report'],
-      [`Period: ${format(new Date(dateRange.start), 'dd/MM/yyyy', { locale: localeEnIN })} - ${format(new Date(dateRange.end), 'dd/MM/yyyy', { locale: localeEnIN })}`],
+  const buildRevenueCsv = () => {
+    if (!revenueSummary) return '';
+    const period = `${format(new Date(dateRange.start), 'dd/MM/yyyy', { locale: localeEnIN })} - ${format(new Date(dateRange.end), 'dd/MM/yyyy', { locale: localeEnIN })}`;
+    const rows: (string | number)[][] = [
+      ['MuftGo Laundry POS - Revenue Report'],
+      ['Store', currentStore?.store_name || '-'],
+      ['Period', period],
+      ['Generated on', format(new Date(), 'dd/MM/yyyy hh:mm a', { locale: localeEnIN })],
+      ['All amounts in INR (₹)'],
       [],
-      ['Gross Revenue', formatCurrency(revenueSummary.grossProfit)],
+      ['Summary', 'Amount (₹)'],
+      ['Gross Revenue', Math.round(revenueSummary.grossProfit)],
       [],
-      ['UPI Payments', formatCurrency(revenueSummary.paymentMethods.qris)],
-      ['Cash Payments', formatCurrency(revenueSummary.paymentMethods.cash)],
-      ['Transfer Payments', formatCurrency(revenueSummary.paymentMethods.transfer)],
+      ['Payments by Method', 'Amount (₹)'],
+      ...Object.entries(paymentMethodLabels).map(([key, label]) => [
+        `${label} Payments`,
+        Math.round((revenueSummary.paymentMethods as any)?.[key] || 0),
+      ]),
       [],
-      ['Deductions'],
-      ['Detergent', formatCurrency(revenueSummary.deductions.detergent)],
-      ['Gas', formatCurrency(revenueSummary.deductions.gas)],
-      ['Electricity', formatCurrency(revenueSummary.deductions.electricity)],
-      ['Promo', formatCurrency(revenueSummary.deductions.promo)],
-      ['Maintenance', formatCurrency(revenueSummary.deductions.maintenance)],
-      ['Others', formatCurrency(revenueSummary.deductions.other)],
+      ['Deductions (Expenses)', 'Amount (₹)'],
+      ...Object.entries(categoryLabels).map(([key, label]) => [
+        label,
+        Math.round((revenueSummary.deductions as any)?.[key] || 0),
+      ]),
       [],
-      ['Net Revenue', formatCurrency(revenueSummary.netProfit)],
-    ].map(row => row.join(',')).join('\n');
+      ['Net Revenue', Math.round(revenueSummary.netProfit)],
+    ];
+    return '\ufeff' + rows.map((row) => row.map(csvCell).join(',')).join('\n');
+  };
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `revenue-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportCSV = async () => {
+    if (!revenueSummary || isExporting) return;
+    setIsExporting(true);
+    try {
+      const csv = buildRevenueCsv();
+      const fileName = `revenue-report-${currentStore?.store_name?.replace(/[^\w]+/g, '-').toLowerCase() || 'store'}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      const file = new File([csv], fileName, { type: 'text/csv;charset=utf-8' });
+
+      // Native/APK path: system share sheet (WhatsApp, Gmail, Drive...).
+      // Anchor downloads silently fail inside the Capacitor WebView, which is
+      // why "export was not working" in the APK.
+      const nav: any = navigator;
+      if (nav?.canShare?.({ files: [file] })) {
+        await nav.share({
+          files: [file],
+          title: 'Revenue Report',
+          text: `${currentStore?.store_name || 'Store'} revenue report`,
+        });
+        toast.success('Report shared');
+        return;
+      }
+
+      // Desktop web path: direct download.
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast.success('Report downloaded');
+    } catch (error: any) {
+      // User dismissing the share sheet throws AbortError - not a failure.
+      if (error?.name !== 'AbortError') {
+        console.error('Error exporting report:', error);
+        toast.error('Could not export report. Please try again.');
+      }
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const displayDateRange = () => {
@@ -310,10 +357,17 @@ export const RevenueReportPage = () => {
           <div className="flex justify-center">
             <Button
               onClick={handleExportCSV}
+              disabled={isExporting || !revenueSummary}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
+              {isExporting ? (
+                <>Exporting...</>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </>
+              )}
             </Button>
           </div>
         </>

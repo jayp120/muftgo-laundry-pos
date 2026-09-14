@@ -2,15 +2,21 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, Plus, TrendingUp, History, Building2 } from 'lucide-react';
 import { BottomNavItem } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/contexts/StoreContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { canAccess } from '@/lib/permissions';
 
 /**
  * Builds the shared bottom-nav item set used across every screen: Home, New Order,
- * Reports (owner) / History (staff), and Stores (owner-only).
+ * Reports (revenue access) / History, and Stores (owner-only). Worker sees Home +
+ * History only (no billing tab).
  */
 export const useMobileBottomNavItems = (): BottomNavItem[] => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isOwner } = useStore();
+  const { user } = useAuth();
+  const showNewOrder = canAccess('pos', user?.role);
+  const showReports = canAccess('revenue', user?.role);
 
   const items: Array<BottomNavItem | null> = [
     {
@@ -20,15 +26,17 @@ export const useMobileBottomNavItems = (): BottomNavItem[] => {
       active: location.pathname === '/home',
       onClick: () => navigate('/home'),
     },
-    {
-      id: 'orders',
-      title: 'New Order',
-      icon: Plus,
-      active: location.pathname === '/pos',
-      onClick: () => navigate('/pos'),
-      primary: true,
-    },
-    isOwner
+    showNewOrder
+      ? {
+          id: 'orders',
+          title: 'New Order',
+          icon: Plus,
+          active: location.pathname === '/pos',
+          onClick: () => navigate('/pos'),
+          primary: true,
+        }
+      : null,
+    showReports
       ? {
           id: 'reports',
           title: 'Reports',

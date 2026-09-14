@@ -24,6 +24,8 @@ import { useStore } from '@/contexts/StoreContext';
 import { usePendingOrders } from '@/hooks/useOfflineOrderQueue';
 import { retryOfflineOrderNow } from '@/hooks/useOfflineOrderSync';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
+import { useAuth } from '@/contexts/AuthContext';
+import { canCollectPayments } from '@/lib/permissions';
 import { toast } from 'sonner';
 import { DateRange } from 'react-day-picker';
 import { startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
@@ -46,6 +48,9 @@ export const OrderHistory = () => {
   const navigate = useNavigate();
   usePageTitle('Order History');
   const { isOwner, currentStore } = useStore();
+  const { user } = useAuth();
+  // Worker role: status progression only, money buttons hidden in the list.
+  const hidePaymentActions = !canCollectPayments(user?.role);
   const pendingOfflineOrders = usePendingOrders(currentStore?.store_id);
   const { notifyOrderCreated } = useWhatsApp();
   const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
@@ -835,6 +840,7 @@ export const OrderHistory = () => {
                       onResendNotification={handleResendNotification}
                       processingOrderId={processingOrderId}
                       processingAction={processingAction}
+                      hidePaymentActions={hidePaymentActions}
                       height={500} // Fixed responsive height
                     />
                   </div>

@@ -23,7 +23,7 @@ export interface ExtendedUser {
   email: string;
   full_name?: string;
   phone?: string;
-  role: 'staff' | 'laundry_owner';
+  role: 'owner' | 'manager' | 'counter' | 'worker' | 'staff' | 'laundry_owner';
   store_id?: string;
   is_active: boolean;
   created_at: string;
@@ -96,7 +96,7 @@ export interface OrderWithStore {
   updated_at: string;
 }
 
-export type UserRole = 'staff' | 'laundry_owner';
+export type UserRole = 'owner' | 'manager' | 'counter' | 'worker';
 
 export interface CreateUserData {
   email: string;

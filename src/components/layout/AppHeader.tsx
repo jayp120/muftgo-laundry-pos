@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { canAccess, ROLE_LABELS, normalizeRole } from '@/lib/permissions';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -123,21 +124,29 @@ export const AppHeader: React.FC = () => {
                     <History className="h-4 w-4 mr-2" />
                     Order History
                   </DropdownMenuItem>
+                  {canAccess('customers', user?.role) && (
                   <DropdownMenuItem onClick={handleCustomersNavigation}>
                     <Users className="h-4 w-4 mr-2" />
                     Customer
                   </DropdownMenuItem>
+                  )}
+                  {canAccess('expenses', user?.role) && (
                   <DropdownMenuItem onClick={handleExpensesNavigation}>
                     <Wallet className="h-4 w-4 mr-2" />
                     Expenses
                   </DropdownMenuItem>
-                  {isOwner && (
+                  )}
+                  {(canAccess('services', user?.role) || canAccess('revenue', user?.role)) && (
                     <>
                       <DropdownMenuSeparator />
+                      {canAccess('services', user?.role) && (
                       <DropdownMenuItem onClick={handleServicesNavigation}>
                         <Wrench className="h-4 w-4 mr-2" />
                         Service
                       </DropdownMenuItem>
+                      )}
+                      {isOwner && (
+                      <>
                       <DropdownMenuItem onClick={handleStoresNavigation}>
                         <Building2 className="h-4 w-4 mr-2" />
                         Store Management
@@ -146,10 +155,14 @@ export const AppHeader: React.FC = () => {
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Broadcast WhatsApp
                       </DropdownMenuItem>
+                      </>
+                      )}
+                      {canAccess('revenue', user?.role) && (
                       <DropdownMenuItem onClick={handleRevenueReportNavigation}>
                         <TrendingUp className="h-4 w-4 mr-2" />
                         Revenue Report
                       </DropdownMenuItem>
+                      )}
                     </>
                   )}
                 </DropdownMenuContent>
@@ -183,6 +196,7 @@ export const AppHeader: React.FC = () => {
               <span>Home</span>
             </Button>
 
+            {canAccess('pos', user?.role) && (
             <Button
               variant={isOnPOS ? "default" : "ghost"}
               size="sm"
@@ -196,6 +210,7 @@ export const AppHeader: React.FC = () => {
               <Plus className="h-4 w-4" />
               <span>New Order</span>
             </Button>
+            )}
 
             <Button
               variant={isOnHistory ? "default" : "ghost"}
@@ -211,6 +226,7 @@ export const AppHeader: React.FC = () => {
               <span>History</span>
             </Button>
 
+            {canAccess('customers', user?.role) && (
             <Button
               variant={isOnCustomers ? "default" : "ghost"}
               size="sm"
@@ -224,7 +240,9 @@ export const AppHeader: React.FC = () => {
               <Users className="h-4 w-4" />
               <span>Customer</span>
             </Button>
+            )}
 
+            {canAccess('expenses', user?.role) && (
             <Button
               variant={isOnExpenses ? "default" : "ghost"}
               size="sm"
@@ -238,9 +256,10 @@ export const AppHeader: React.FC = () => {
               <Wallet className="h-4 w-4" />
               <span>Expenses</span>
             </Button>
+            )}
 
-            {/* Owner-only Navigation - Consolidated Dropdown */}
-            {isOwner && (
+            {/* Management Dropdown - each entry gated by role */}
+            {(canAccess('services', user?.role) || isOwner) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -259,6 +278,7 @@ export const AppHeader: React.FC = () => {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>Management</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {canAccess('services', user?.role) && (
                   <DropdownMenuItem onClick={handleServicesNavigation}>
                     <Wrench className="h-4 w-4 mr-2" />
                     Service
@@ -266,6 +286,9 @@ export const AppHeader: React.FC = () => {
                       <Check className="h-4 w-4 ml-auto text-blue-600" />
                     )}
                   </DropdownMenuItem>
+                  )}
+                  {isOwner && (
+                  <>
                   <DropdownMenuItem onClick={handleStoresNavigation}>
                     <Building2 className="h-4 w-4 mr-2" />
                     Store Management
@@ -280,6 +303,9 @@ export const AppHeader: React.FC = () => {
                       <Check className="h-4 w-4 ml-auto text-blue-600" />
                     )}
                   </DropdownMenuItem>
+                  </>
+                  )}
+                  {canAccess('revenue', user?.role) && (
                   <DropdownMenuItem onClick={handleRevenueReportNavigation}>
                     <TrendingUp className="h-4 w-4 mr-2" />
                     Revenue Report
@@ -287,6 +313,7 @@ export const AppHeader: React.FC = () => {
                       <Check className="h-4 w-4 ml-auto text-blue-600" />
                     )}
                   </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -301,7 +328,8 @@ export const AppHeader: React.FC = () => {
               </div>
             )}
 
-            {/* Quick Actions */}
+            {/* Quick Actions - not for worker */}
+            {canAccess('customers', user?.role) && (
             <div className="hidden sm:flex">
               <AddCustomerDialog
                 trigger={
@@ -312,6 +340,7 @@ export const AppHeader: React.FC = () => {
                 }
               />
             </div>
+            )}
 
             {/* User Menu */}
             <DropdownMenu>
@@ -334,7 +363,7 @@ export const AppHeader: React.FC = () => {
                       {user.email}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground capitalize">
-                      {user.role === 'laundry_owner' ? 'Owner' : 'Staff'}
+                      {ROLE_LABELS[normalizeRole(user.role)]}
                     </p>
                     {currentStore && (
                       <Badge variant="secondary" className="w-fit text-xs">
@@ -378,6 +407,7 @@ export const AppHeader: React.FC = () => {
                     <DropdownMenuSeparator />
                   </div>
                 )}
+                {canAccess('customers', user?.role) && (
                 <div className="sm:hidden">
                   <AddCustomerDialog
                     trigger={
@@ -392,6 +422,7 @@ export const AppHeader: React.FC = () => {
                   />
                   <DropdownMenuSeparator />
                 </div>
+                )}
                 <DropdownMenuItem onClick={() => navigate('/install')}>
                   <Smartphone className="h-4 w-4 mr-2" />
                   Install App

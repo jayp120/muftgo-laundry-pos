@@ -840,17 +840,31 @@ export const EnhancedLaundryPOS = () => {
                 <label className="text-xs font-medium text-muted-foreground sm:text-sm">
                   Search Customer
                 </label>
-                {customerPhone && customerName && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearCustomerForm}
-                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Clear
-                  </Button>
-                )}
+                <div className="flex items-center gap-1">
+                  {!(customerPhone && customerName) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleAddNewCustomerFast}
+                      className="h-6 px-2 text-xs text-primary hover:text-primary"
+                      title="Add a new customer inline - saved automatically with the order"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      New
+                    </Button>
+                  )}
+                  {customerPhone && customerName && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearCustomerForm}
+                      className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />

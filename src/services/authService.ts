@@ -1,11 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeRole } from '@/lib/permissions';
 
 export interface User {
   id: string;
   email: string;
   full_name?: string;
   phone?: string;
-  role: 'staff' | 'laundry_owner';
+  role: 'owner' | 'manager' | 'counter' | 'worker' | 'staff' | 'laundry_owner';
   store_id?: string;
   is_active: boolean;
 }
@@ -48,6 +49,10 @@ class AuthService {
         const session = JSON.parse(stored) as AuthSession;
         // Check if session is still valid
         if (Date.now() < session.expires_at) {
+          // Normalize legacy roles from sessions saved before v1.1
+          if (session.user) {
+            session.user.role = normalizeRole(session.user.role) as User['role'];
+          }
           this.session = session;
         } else {
           this.clearSession();
@@ -72,7 +77,7 @@ class AuthService {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
-  async signUp(email: string, password: string, fullName?: string, phone?: string, role: 'staff' | 'laundry_owner' = 'staff', storeData?: { name: string; address?: string; phone?: string; }, setSession: boolean = true): Promise<User> {
+  async signUp(email: string, password: string, fullName?: string, phone?: string, role: 'owner' | 'manager' | 'counter' | 'worker' | 'staff' | 'laundry_owner' = 'counter', storeData?: { name: string; address?: string; phone?: string; }, setSession: boolean = true): Promise<User> {
     try {
       const { data, error } = await supabase.rpc('create_user', {
         user_email: email,
@@ -101,7 +106,7 @@ class AuthService {
 
       // If owner signup and store data provided, create store (owner_id will be set by RPC)
       // Note: For owners, we keep users.store_id NULL and track ownership via stores.owner_id
-      if (role === 'laundry_owner' && storeData && storeData.name) {
+      if (normalizeRole(role) === 'owner' && storeData && storeData.name) {
         try {
           // createStoreForUser RPC will set stores.owner_id = userData.id
           const newStoreId = await this.createStoreForUser(userData.id, storeData);
@@ -122,7 +127,7 @@ class AuthService {
         email: userData.email,
         full_name: userData.full_name,
         phone: userData.phone,
-        role: userData.role as 'staff' | 'laundry_owner',
+        role: normalizeRole(userData.role) as User['role'],
         store_id: storeId,
         is_active: userData.is_active
       };
@@ -174,7 +179,7 @@ class AuthService {
         email: userData.email,
         full_name: userData.full_name,
         phone: userData.phone,
-        role: userData.role as 'staff' | 'laundry_owner',
+        role: normalizeRole(userData.role) as User['role'],
         store_id: userStoreData?.store_id,
         is_active: userData.is_active
       };
@@ -250,7 +255,7 @@ class AuthService {
         email: userData.email,
         full_name: userData.full_name,
         phone: userData.phone,
-        role: userData.role as 'staff' | 'laundry_owner',
+        role: normalizeRole(userData.role) as User['role'],
         store_id: userStoreData?.store_id,
         is_active: userData.is_active,
       };
@@ -258,7 +263,7 @@ class AuthService {
       const session: AuthSession = {
         user,
         token: this.generateToken(),
-        expires_at: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+        expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
       };
 
       this.saveSession(session);
@@ -429,7 +434,7 @@ class AuthService {
         throw new Error(ownerError.message);
       }
 
-      if (!ownerData || ownerData.role !== 'laundry_owner') {
+      if (!ownerData || normalizeRole(ownerData.role) !== 'owner') {
         throw new Error('Current user is not a laundry owner');
       }
     } catch (err) {
@@ -468,18 +473,18 @@ class AuthService {
   }
 
   isOwner(): boolean {
-    return this.session?.user.role === 'laundry_owner';
+    return normalizeRole(this.session?.user.role) === 'owner';
   }
 
   isStaff(): boolean {
-    return this.session?.user.role === 'staff';
+    return normalizeRole(this.session?.user.role) !== 'owner';
   }
 
   hasStoreAccess(storeId: string): boolean {
     if (!this.session) return false;
     
     const user = this.session.user;
-    if (user.role === 'laundry_owner') return true; // Owners can access all their stores
+    if (normalizeRole(user.role) === 'owner') return true; // Owners can access all their stores
     
     return user.store_id === storeId; // Staff can only access their assigned store
   }

@@ -123,6 +123,8 @@ export const useCustomers = () => {
     }
   };
 
+  const normalizePhone = (phone: string) => (phone || '').replace(/\D/g, '').slice(-10);
+
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
     if (!currentStore) {
       toast({
@@ -133,27 +135,62 @@ export const useCustomers = () => {
       return;
     }
 
+    // Identity rule: one record per mobile per store. Normalize first so
+    // "09876543210" and "919876543210" don't double up, then reuse the
+    // existing record instead of erroring on duplicates.
+    const phone = normalizePhone(customerData.phone || '');
+    if (phone.length !== 10) {
+      toast({
+        title: "Invalid mobile number",
+        description: "Enter a valid 10-digit Indian mobile number",
+        variant: "destructive",
+      });
+      throw new Error('Invalid mobile number');
+    }
+
+    const existing = await getCustomerByPhone(phone).catch(() => null);
+    if (existing) {
+      toast({
+        title: "Customer already exists",
+        description: `${existing.name} (${existing.phone}) - using existing record`,
+      });
+      return existing;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('customers')
         .insert([{
           ...customerData,
+          phone,
           store_id: currentStore.store_id
         }])
         .select()
         .single();
 
       if (error) throw error;
-      
+
       toast({
         title: "Success",
         description: "Customer added successfully",
       });
-      
+
       return data;
     } catch (error: any) {
       console.error('Error adding customer:', error);
+      // Race: someone added the same number concurrently (or a format
+      // variant slipped through) - fetch and reuse instead of failing.
+      if (error?.code === '23505') {
+        const dup = await getCustomerByPhone(phone).catch(() => null);
+        if (dup) {
+          toast({
+            title: "Customer already exists",
+            description: `${dup.name} (${dup.phone}) - using existing record`,
+          });
+          return dup;
+        }
+      }
       toast({
         title: "Error",
         description: error.message || "Failed to add customer",
@@ -167,13 +204,26 @@ export const useCustomers = () => {
 
   const getCustomerByPhone = async (phone: string) => {
     if (!currentStore) return null;
-    
+
     try {
+      // Try exact match plus normalized Indian variants so pre-normalization
+      // rows ("919876543210", "09876543210") still resolve to one record.
+      const digits = (phone || '').replace(/\D/g, '');
+      const candidates = [...new Set([
+        phone,
+        digits,
+        digits.slice(-10),
+        digits.slice(-10) ? `91${digits.slice(-10)}` : '',
+        digits.slice(-10) ? `0${digits.slice(-10)}` : '',
+      ].filter(Boolean))];
+
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .eq('phone', phone)
+        .in('phone', candidates)
         .eq('store_id', currentStore.store_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;

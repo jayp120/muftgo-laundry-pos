@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 import { ChangePasswordDialog } from '@/components/auth/ChangePasswordDialog';
+import { canAccess, normalizeRole, ROLE_LABELS, type AppSection } from '@/lib/permissions';
 
 // Constants for display truncation
 const USER_INITIALS_MAX_LENGTH = 2;
@@ -57,7 +58,7 @@ const STORE_NAME_MAX_LENGTH = 10;
 
 export const AppSidebar: React.FC = () => {
   const { user, signOut } = useAuth();
-  const { currentStore, isOwner } = useStore();
+  const { currentStore } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { setOpenMobile, isMobile } = useSidebar();
@@ -118,29 +119,34 @@ export const AppSidebar: React.FC = () => {
     },
   ];
 
-  // Owner-only menu items
-  const ownerMenuItems = [
+  // Management menu items - each row gated by role (manager sees Service +
+  // Revenue; stores/broadcast stay owner-only)
+  const ownerMenuItems: { title: string; icon: any; path: string; section: AppSection }[] = [
     {
       title: 'Service',
       icon: Wrench,
       path: '/services',
+      section: 'services',
     },
     {
       title: 'Store Management',
       icon: Building2,
       path: '/stores',
+      section: 'stores',
     },
     {
       title: 'Broadcast WhatsApp',
       icon: MessageSquare,
       path: '/whatsapp-broadcast',
+      section: 'broadcast',
     },
     {
       title: 'Revenue Report',
       icon: TrendingUp,
       path: '/revenue-report',
+      section: 'revenue',
     },
-  ];
+  ].filter((item) => canAccess(item.section, user?.role));
 
   return (
     <Sidebar collapsible="offcanvas">
@@ -179,7 +185,8 @@ export const AppSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - hidden for worker (no customer management) */}
+        {canAccess('customers', user?.role) && (
         <SidebarGroup>
           <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -197,11 +204,12 @@ export const AppSidebar: React.FC = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         <SidebarSeparator />
 
         {/* Owner-only Management Section */}
-        {isOwner && (
+        {ownerMenuItems.length > 0 && (
           <SidebarGroup>
             <Collapsible defaultOpen className="group/collapsible">
               <SidebarGroupLabel asChild>
@@ -284,7 +292,7 @@ export const AppSidebar: React.FC = () => {
                       {user.full_name || user.email?.split('@')[0] || 'User'}
                     </span>
                     <span className="text-xs text-muted-foreground truncate w-full">
-                      {user.role === 'laundry_owner' ? 'Owner' : 'Staff'}
+                      {ROLE_LABELS[normalizeRole(user.role)]}
                     </span>
                   </div>
                   {currentStore && (

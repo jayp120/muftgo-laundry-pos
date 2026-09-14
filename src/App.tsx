@@ -18,6 +18,7 @@ import { StoreProvider } from "./contexts/StoreContext";
 import { ThermalPrinterProvider } from "./contexts/ThermalPrinterContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { OwnerRoute } from "./components/auth/OwnerRoute";
+import { RoleRoute } from "./components/auth/RoleRoute";
 import { ProtectedRedirect } from "./components/auth/ProtectedRedirect";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppLayout } from "./components/layout/AppLayout";
@@ -88,9 +89,11 @@ const App = () => (
                   path="/pos" 
                   element={
                     <ProtectedRoute>
-                      <AppLayout>
-                        <Index />
-                      </AppLayout>
+                      <RoleRoute allow="pos">
+                        <AppLayout>
+                          <Index />
+                        </AppLayout>
+                      </RoleRoute>
                     </ProtectedRoute>
                   } 
                 />
@@ -108,9 +111,11 @@ const App = () => (
                   path="/customers" 
                   element={
                     <ProtectedRoute>
-                      <AppLayout>
-                        <CustomersPage />
-                      </AppLayout>
+                      <RoleRoute allow="customers">
+                        <AppLayout>
+                          <CustomersPage />
+                        </AppLayout>
+                      </RoleRoute>
                     </ProtectedRoute>
                   } 
                 />
@@ -118,11 +123,11 @@ const App = () => (
                   path="/services" 
                   element={
                     <ProtectedRoute>
-                      <OwnerRoute>
+                      <RoleRoute allow="services">
                         <AppLayout>
                           <ServiceManagement />
                         </AppLayout>
-                      </OwnerRoute>
+                      </RoleRoute>
                     </ProtectedRoute>
                   } 
                 />
@@ -154,11 +159,11 @@ const App = () => (
                   path="/revenue-report" 
                   element={
                     <ProtectedRoute>
-                      <OwnerRoute>
+                      <RoleRoute allow="revenue">
                         <AppLayout>
                           <RevenueReportPage />
                         </AppLayout>
-                      </OwnerRoute>
+                      </RoleRoute>
                     </ProtectedRoute>
                   } 
                 />
@@ -166,9 +171,11 @@ const App = () => (
                   path="/expenses" 
                   element={
                     <ProtectedRoute>
-                      <AppLayout>
-                        <ExpensesPage />
-                      </AppLayout>
+                      <RoleRoute allow="expenses">
+                        <AppLayout>
+                          <ExpensesPage />
+                        </AppLayout>
+                      </RoleRoute>
                     </ProtectedRoute>
                   } 
                 />

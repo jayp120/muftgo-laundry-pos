@@ -14,6 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Users, UserPlus, Mail, Phone, Calendar } from 'lucide-react';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
+import { ASSIGNABLE_STAFF_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, normalizeRole, type UserRole } from '@/lib/permissions';
 
 interface StoreStaffManagementProps {
   store: StoreWithOwnershipInfo;
@@ -35,6 +36,7 @@ interface CreateStaffForm {
   password: string;
   full_name: string;
   phone: string;
+  role: UserRole;
 }
 
 export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ store }) => {
@@ -55,6 +57,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
     password: '',
     full_name: '',
     phone: '',
+    role: 'counter',
   });
   const { toast } = useToast();
 
@@ -70,7 +73,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
         .from('users')
         .select('*')
         .eq('store_id', store.store_id)
-        .eq('role', 'staff');
+        .in('role', ['manager', 'counter', 'worker', 'staff']);
 
       if (error) throw error;
       setStaff(data || []);
@@ -91,7 +94,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('role', 'staff')
+        .in('role', ['manager', 'counter', 'worker', 'staff'])
         .is('store_id', null);
 
       if (error) throw error;
@@ -106,13 +109,13 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
     try {
       setLoading(true);
       
-      // Use the signUp method to create a new staff user
+      // Use the signUp method to create a new staff user with the chosen role
       const newUser = await authService.signUp(
         createForm.email,
         createForm.password,
         createForm.full_name,
         createForm.phone,
-        'staff',
+        createForm.role,
         undefined,
         false // do not set session when creating staff
       );
@@ -122,10 +125,10 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
 
       toast({
         title: 'Success',
-        description: 'Staff member created and assigned successfully',
+        description: `${ROLE_LABELS[createForm.role]} created and assigned successfully`,
       });
 
-      setCreateForm({ email: '', password: '', full_name: '', phone: '' });
+      setCreateForm({ email: '', password: '', full_name: '', phone: '', role: 'counter' });
   setCreateDialogOpen(false);
   await loadStaff();
   await loadUnassignedStaff();
@@ -242,6 +245,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                           <div className="flex-1">
                             <p className="font-medium">{staffMember.full_name || 'No name'}</p>
                             <p className="text-sm text-muted-foreground">{staffMember.email}</p>
+                            <Badge variant="outline" className="mt-1">{ROLE_LABELS[normalizeRole(staffMember.role)]}</Badge>
                           </div>
                           <div className="flex-shrink-0">
                             <Button
@@ -317,6 +321,27 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                       onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="role">Role</Label>
+                    <Select
+                      value={createForm.role}
+                      onValueChange={(v) => setCreateForm({ ...createForm, role: v as UserRole })}
+                    >
+                      <SelectTrigger id="role">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ASSIGNABLE_STAFF_ROLES.map((r) => (
+                          <SelectItem key={r} value={r}>
+                            {ROLE_LABELS[r]} - {ROLE_DESCRIPTIONS[r]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Manager runs the shop. Counter bills only. Worker updates order status only, no payments.
+                    </p>
+                  </div>
                   <div className="flex justify-end gap-2">
                     <Button
                       type="button"
@@ -358,7 +383,10 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                     <div className="flex-1">
                       <div className="flex items-start sm:items-center gap-3">
                         <div>
-                          <h4 className="font-medium">{staffMember.full_name || 'No name'}</h4>
+                            <h4 className="font-medium">{staffMember.full_name || 'No name'}</h4>
+                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                              <Badge variant="outline">{ROLE_LABELS[normalizeRole(staffMember.role)]}</Badge>
+                            </div>
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Mail className="h-3 w-3" />

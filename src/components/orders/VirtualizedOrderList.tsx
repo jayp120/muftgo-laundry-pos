@@ -20,6 +20,8 @@ interface VirtualizedOrderListProps {
   onResendNotification?: (orderId: string) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
+  /** Worker role: status buttons stay, all money buttons hide. */
+  hidePaymentActions?: boolean;
 }
 
 interface ItemData {
@@ -35,14 +37,15 @@ interface ItemData {
   onResendNotification?: (orderId: string) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
+  hidePaymentActions?: boolean;
 }
 
-const OrderItem = memo(({ index, style, data }: { 
-  index: number; 
-  style: React.CSSProperties; 
+const OrderItem = memo(({ index, style, data }: {
+  index: number;
+  style: React.CSSProperties;
   data: ItemData;
 }) => {
-  const { orders, onOrderClick, onUpdatePayment, onUpdateExecution, processingOrderId, processingAction } = data;
+  const { orders, onOrderClick, onUpdatePayment, onUpdateExecution, processingOrderId, processingAction, hidePaymentActions } = data;
   const order = orders[index];
 
   if (!order) return null;
@@ -280,8 +283,8 @@ const OrderItem = memo(({ index, style, data }: {
                   </Button>
                 )}
 
-                {/* Row 4: Payment Actions */}
-                {order.payment_status === 'pending' && data.onShowPaymentDialog && (
+                {/* Row 4: Payment Actions - hidden for worker role */}
+                {!hidePaymentActions && order.payment_status === 'pending' && data.onShowPaymentDialog && (
                   <Button
                     variant="success"
                     size="sm"
@@ -299,7 +302,7 @@ const OrderItem = memo(({ index, style, data }: {
                     )}
                   </Button>
                 )}
-                {order.payment_status === 'down_payment' && data.onShowPaymentDialog && (
+                {!hidePaymentActions && order.payment_status === 'down_payment' && data.onShowPaymentDialog && (
                   <Button
                     variant="default"
                     size="sm"
@@ -317,7 +320,7 @@ const OrderItem = memo(({ index, style, data }: {
                     )}
                   </Button>
                 )}
-                {order.payment_status === 'pending' && !data.onShowPaymentDialog && (
+                {!hidePaymentActions && order.payment_status === 'pending' && !data.onShowPaymentDialog && (
                   <div className="grid grid-cols-2 gap-1 sm:gap-2">
                     <Button
                       variant="outline"
@@ -405,6 +408,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onResendNotification,
     processingOrderId,
     processingAction,
+    hidePaymentActions,
   };
 
   // Responsive item size - accounts for all action buttons including WhatsApp resend

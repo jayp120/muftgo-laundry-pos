@@ -522,6 +522,39 @@ export const useUpdateOrderStatusWithNotifications = () => {
 
       return { orderId, executionStatus, pointstsEarned };
     },
+    onMutate: async (vars) => {
+      // Optimistic update: flip the order's status in every cached orders
+      // list instantly so "Start Processing" etc. respond immediately even on
+      // slow/flaky networks (web + APK). Rolled back below on error.
+      await queryClient.cancelQueries({ queryKey: ORDERS_QUERY_KEY });
+      const previous = queryClient.getQueriesData({ queryKey: ORDERS_QUERY_KEY });
+      const patchOrder = (o: any) =>
+        o && o.id === vars.orderId
+          ? {
+              ...o,
+              ...(vars.executionStatus !== undefined ? { execution_status: vars.executionStatus } : {}),
+              ...(vars.paymentStatus !== undefined ? { payment_status: vars.paymentStatus } : {}),
+              ...(vars.paymentMethod !== undefined ? { payment_method: vars.paymentMethod } : {}),
+            }
+          : o;
+      queryClient.setQueriesData({ queryKey: ORDERS_QUERY_KEY }, (old: any) => {
+        if (!old) return old;
+        // Infinite-list shape: { pages: [{ data: [...] }] }
+        if (old.pages) {
+          return {
+            ...old,
+            pages: old.pages.map((p: any) => ({
+              ...p,
+              data: (p.data || []).map(patchOrder),
+            })),
+          };
+        }
+        // Plain-list shape: [...]
+        if (Array.isArray(old)) return old.map(patchOrder);
+        return old;
+      });
+      return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
       toast({
@@ -529,11 +562,17 @@ export const useUpdateOrderStatusWithNotifications = () => {
         description: "Order status updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (error, _vars, context: any) => {
+      // Roll back the optimistic flip so the list never lies.
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       console.error('Error updating order status:', error);
       toast({
         title: "Error",
-        description: "Failed to update order status. Please try again.",
+        description: error instanceof Error && error.message ? error.message : "Failed to update order status. Please try again.",
         variant: "destructive",
       });
     },
