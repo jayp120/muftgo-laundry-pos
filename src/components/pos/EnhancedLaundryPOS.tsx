@@ -245,7 +245,7 @@ export const EnhancedLaundryPOS = () => {
     return longestDate;
   };
 
-  // Search for customers when phone/name changes - searches both fields.
+  // Search for customers when phone/name changes - matches EITHER field.
   // This effect is the SOLE writer of searchResults: results are taken from
   // the search call's own return value (not the shared `customers` state),
   // and stale responses are dropped via searchSeqRef. The old design copied
@@ -257,11 +257,17 @@ export const EnhancedLaundryPOS = () => {
     const searchCustomer = async () => {
       // A newer keystroke already superseded this run.
       if (mySeq !== searchSeqRef.current) return;
-      const q = (customerPhone || '').trim();
+      const phoneQ = (customerPhone || '').trim();
+      const nameQ = (customerName || '').trim();
       // Don't search while selecting, or when both fields already complete
-      const isFormFilled = q.length >= 3 && customerName.trim().length > 0;
+      const isFormFilled = phoneQ.length >= 3 && nameQ.length > 0;
+      // Smart query: prefer the phone field, but fall back to the name field
+      // so typing only a name ("jay") still finds existing customers. The API
+      // matches the query against BOTH the name and phone columns, so a phone
+      // typed into the name field still resolves too.
+      const q = phoneQ.length >= 2 ? phoneQ : nameQ.length >= 2 ? nameQ : '';
 
-      if (q.length >= 2 && !isSelectingCustomer && !isFormFilled) {
+      if (q && !isSelectingCustomer && !isFormFilled) {
         try {
           const results = await searchCustomers(q);
           if (mySeq !== searchSeqRef.current) return;
@@ -278,9 +284,9 @@ export const EnhancedLaundryPOS = () => {
         setSearchResults([]);
         setShowResults(false);
         // Keep the "New" badge when the form just became complete (user
-        // finished typing a new customer's details); clear it only when the
-        // query itself was shortened/cleared.
-        if ((customerPhone || '').trim().length < 2) {
+        // finished typing a new customer's details); clear it only when
+        // both fields were shortened/cleared.
+        if (phoneQ.length < 2 && nameQ.length < 2) {
           setIsNewCustomer(false);
         }
       }

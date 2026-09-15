@@ -223,19 +223,32 @@ const ServiceManagement = () => {
       {isMobile ? (
         <MobilePageHeader title="Service Management" onBack={() => navigate('/home')} />
       ) : (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div>
             <h1 className="text-3xl font-bold">Service Management</h1>
             <p className="text-muted-foreground">Manage your laundry services and pricing</p>
           </div>
-          <Button
-            onClick={openCreateDialog}
-            className="flex items-center space-x-2"
-            disabled={isProcessing}
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Service</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* One-tap Pune rate card: only adds missing items, never duplicates. */}
+            <Button
+              variant="outline"
+              onClick={seedInitialServices}
+              className="hidden sm:flex items-center space-x-2 border-green-600 text-green-700 hover:bg-green-50"
+              disabled={isProcessing}
+              title="Adds the Pune rate card (wash, ironing, dry clean, blankets, shoes). Existing services are kept."
+            >
+              <Plus className="h-4 w-4" />
+              <span>{isProcessing ? 'Loading...' : 'Add Pune Rate Card'}</span>
+            </Button>
+            <Button
+              onClick={openCreateDialog}
+              className="flex items-center space-x-2"
+              disabled={isProcessing}
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Service</span>
+            </Button>
+          </div>
         </div>
       )}
 
@@ -294,7 +307,7 @@ const ServiceManagement = () => {
                     onClick={seedInitialServices}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? 'Loading...' : 'Load Sample Services'}
+                    {isProcessing ? 'Loading...' : 'Load Pune Rate Card'}
                   </Button>
                 </div>
               </CardContent>

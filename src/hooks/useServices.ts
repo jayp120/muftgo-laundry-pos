@@ -39,42 +39,176 @@ export interface ServiceFormData {
   is_active?: boolean;
 }
 
-// Default starter services seeded for a new store so the POS is usable
-// immediately. Keep in sync with the create_store() SQL function
-// (supabase/migrations/20260621000000_seed_default_services_on_store_create.sql).
+// Default Pune (India) rate card seeded for a new store so the POS is usable
+// immediately with real shop pricing in INR. Keep in sync with the
+// create_store() SQL function
+// (supabase/migrations/20260915000000_pune_default_services.sql).
+// Kilo services carry only kilo_price, piece services only unit_price - the
+// POS shows a stepper only for the supported type.
 export const DEFAULT_SERVICES: ServiceFormData[] = [
+  // --- Wash (per kg) ---
   {
-    name: 'Wash & Iron Regular',
-    description: 'Wash - Dry - Iron - Pack',
+    name: 'Wash & Fold',
+    description: 'Wash, dry & neatly folded',
     category: 'wash',
-    unit_price: 100,
-    kilo_price: 60,
-    supports_unit: true,
+    kilo_price: 70,
+    supports_unit: false,
     supports_kilo: true,
     duration_value: 2,
     duration_unit: 'days',
   },
   {
-    name: 'Express Wash',
-    description: 'Quick wash within 24 hours',
+    name: 'Wash & Iron',
+    description: 'Wash - Dry - Iron - Pack',
     category: 'wash',
-    unit_price: 150,
     kilo_price: 90,
-    supports_unit: true,
+    supports_unit: false,
+    supports_kilo: true,
+    duration_value: 2,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Express Wash & Iron (24 hr)',
+    description: 'Ready in 24 hours',
+    category: 'wash',
+    kilo_price: 140,
+    supports_unit: false,
     supports_kilo: true,
     duration_value: 1,
     duration_unit: 'days',
   },
+  // --- Ironing (per piece) ---
   {
-    name: 'Ironing Only',
-    description: 'Ironing and pressing only',
+    name: 'Shirt Iron',
+    description: 'Press only',
     category: 'ironing',
-    unit_price: 30,
-    kilo_price: 20,
+    unit_price: 15,
     supports_unit: true,
-    supports_kilo: true,
+    supports_kilo: false,
+    duration_value: 1,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Pant Iron',
+    description: 'Press only',
+    category: 'ironing',
+    unit_price: 15,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 1,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Kurta Iron',
+    description: 'Press only',
+    category: 'ironing',
+    unit_price: 25,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 1,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Saree Iron',
+    description: 'Iron with starch finish',
+    category: 'ironing',
+    unit_price: 60,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 1,
+    duration_unit: 'days',
+  },
+  // --- Dry clean (per piece) ---
+  {
+    name: 'Shirt Dry Clean',
+    description: 'Dry clean - Press - Pack',
+    category: 'dry',
+    unit_price: 99,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 3,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Pant Dry Clean',
+    description: 'Dry clean - Press - Pack',
+    category: 'dry',
+    unit_price: 99,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 3,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Suit Dry Clean (2 Pc)',
+    description: 'Coat + pant dry clean',
+    category: 'dry',
+    unit_price: 299,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 3,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Saree Dry Clean',
+    description: 'Silk & fancy sarees',
+    category: 'dry',
+    unit_price: 249,
+    supports_unit: true,
+    supports_kilo: false,
     duration_value: 4,
-    duration_unit: 'hours',
+    duration_unit: 'days',
+  },
+  {
+    name: 'Blanket Single',
+    description: 'Single bed blanket / razai',
+    category: 'dry',
+    unit_price: 299,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 4,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Blanket Double / Quilt',
+    description: 'Double bed blanket / quilt',
+    category: 'dry',
+    unit_price: 449,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 4,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Curtain (Per Panel)',
+    description: 'Per curtain panel',
+    category: 'dry',
+    unit_price: 79,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 3,
+    duration_unit: 'days',
+  },
+  // --- Special care (per piece) ---
+  {
+    name: 'Shoes Wash',
+    description: 'Deep clean & deodorise',
+    category: 'special',
+    unit_price: 199,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 3,
+    duration_unit: 'days',
+  },
+  {
+    name: 'School Bag / Backpack Wash',
+    description: 'Wash & dry',
+    category: 'special',
+    unit_price: 149,
+    supports_unit: true,
+    supports_kilo: false,
+    duration_value: 3,
+    duration_unit: 'days',
   },
 ];
 
@@ -206,7 +340,9 @@ export const useCreateService = () => {
 
 // Hook to seed the default starter services for the current store in one batch.
 // Used by empty-state CTAs (POS notice, Service Management) so a new owner can
-// get a working catalog with a single tap.
+// get a working catalog with a single tap. Skips names the store already has,
+// so tapping it on an existing store only ADDS the missing Pune rate-card
+// items instead of duplicating the catalog.
 export const useSeedDefaultServices = () => {
   const queryClient = useQueryClient();
   const { currentStore } = useStore();
@@ -218,10 +354,27 @@ export const useSeedDefaultServices = () => {
         throw new Error('No store selected');
       }
 
+      const { data: existing, error: fetchError } = await supabase
+        .from('services')
+        .select('name')
+        .eq('store_id', currentStore.store_id);
+
+      if (fetchError) {
+        console.error('Error checking existing services:', fetchError);
+        throw fetchError;
+      }
+
+      const existingNames = new Set((existing || []).map((s) => s.name));
+      const missing = DEFAULT_SERVICES.filter((s) => !existingNames.has(s.name));
+
+      if (missing.length === 0) {
+        return;
+      }
+
       const { error } = await supabase
         .from('services')
         .insert(
-          DEFAULT_SERVICES.map((service) => ({
+          missing.map((service) => ({
             ...service,
             store_id: currentStore.store_id,
             is_active: true,
@@ -237,7 +390,7 @@ export const useSeedDefaultServices = () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
       toast({
         title: 'Success',
-        description: 'Sample services created successfully',
+        description: 'Pune rate-card services added successfully',
       });
     },
     onError: () => {
