@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle, Printer, Star, MessageCircle } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { CheckCircle, Printer, Star } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -7,7 +7,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
-import { buildWaMeLink } from '@/lib/india';
+import { useStore } from '@/contexts/StoreContext';
+import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
+import { messageTemplates } from '@/integrations/whatsapp/templates';
+import { SendViaWhatsAppFree } from '@/components/whatsapp/SendViaWhatsAppFree';
 
 interface OrderSuccessDialogProps {
   isOpen: boolean;
@@ -24,6 +27,13 @@ interface OrderSuccessDialogProps {
   discountAmount?: number;
   onPrintReceipt: () => void;
   onNewTransaction: () => void;
+  // Optional rich context — when provided, Free button uses the full
+  // bill template (items + store + ETA + status), identical to auto-send.
+  // Falls back to the short message when absent (backward compatible).
+  subtotal?: number;
+  paymentStatus?: string;
+  estimatedCompletion?: string;
+  orderItems?: any[];
 }
 
 export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
@@ -41,6 +51,10 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
   discountAmount,
   onPrintReceipt,
   onNewTransaction,
+  subtotal,
+  paymentStatus,
+  estimatedCompletion,
+  orderItems,
 }) => {
   const formatPaymentMethod = (method: string) => {
     const methodMap: Record<string, string> = {
@@ -68,12 +82,33 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
     return 'https://muftgo.com';
   };
 
-  const waLink = customerPhone
-    ? buildWaMeLink(
-        customerPhone,
-        `Hi ${customerName}! Your laundry order ${orderNumber} of ₹${totalAmount.toLocaleString('en-IN')} is confirmed. View receipt: ${getReceiptBaseUrl()}/receipt/${orderId}`
-      )
-    : null;
+  const { currentStore } = useStore();
+
+  const freeMessage = useMemo(() => {
+    if (!customerPhone) return null;
+    // Full bill template when the caller passed rich context, else short fallback.
+    if (orderItems && orderItems.length > 0 && currentStore) {
+      try {
+        const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
+        return messageTemplates.orderCreated({
+          orderId,
+          customerName,
+          totalAmount,
+          subtotal: subtotal ?? totalAmount,
+          estimatedCompletion: WhatsAppDataHelper.formatEstimatedCompletion(estimatedCompletion),
+          paymentStatus: paymentStatus || 'pending',
+          orderItems: WhatsAppDataHelper.formatOrderItems(orderItems),
+          storeInfo,
+          pointsEarned: pointstsEarned && pointstsEarned > 0 ? pointstsEarned : undefined,
+          pointsRedeemed: pointstsRedeemed && pointstsRedeemed > 0 ? pointstsRedeemed : undefined,
+          discountAmount: discountAmount && discountAmount > 0 ? discountAmount : undefined,
+        });
+      } catch {
+        // fall through to short message
+      }
+    }
+    return `Hi ${customerName}! Your laundry order ${orderNumber} of ₹${totalAmount.toLocaleString('en-IN')} is confirmed. View receipt: ${getReceiptBaseUrl()}/receipt/${orderId}`;
+  }, [customerPhone, orderItems, currentStore, orderId, customerName, totalAmount, subtotal, paymentStatus, estimatedCompletion, pointstsEarned, pointstsRedeemed, discountAmount, orderNumber]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -124,14 +159,18 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
             </div>
           )}
 
-          {/* Always-available free WhatsApp fallback - works with zero setup */}
-          {waLink && (
-            <a href={waLink} target="_blank" rel="noopener noreferrer" className="block mt-3">
-              <Button variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50">
-                <MessageCircle className="h-5 w-5 mr-2" />
-                Send via WhatsApp (Free)
-              </Button>
-            </a>
+          {/* Always-available free WhatsApp fallback - works with zero setup.
+              Uses the full bill template (same as auto-send) when available. */}
+          {customerPhone && freeMessage && (
+            <div className="block mt-3">
+              <SendViaWhatsAppFree
+                to={customerPhone}
+                message={freeMessage}
+                label="Send via WhatsApp (Free)"
+                size="lg"
+                fullWidth
+              />
+            </div>
           )}
 
           {/* Points Redeemed */}

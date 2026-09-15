@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Printer, Download, Receipt, Bluetooth, MessageSquare, Loader2 } from 'lucide-react';
 import { Order } from '@/hooks/useOrdersOptimized';
+import { OrderFreeWaButton } from '@/components/whatsapp/SendViaWhatsAppFree';
 
 interface VirtualizedOrderListProps {
   orders: Order[];
@@ -204,27 +205,43 @@ const OrderItem = memo(({ index, style, data }: {
                   </Button>
                 )}
 
-                {/* Row 2.5: WhatsApp Resend Action */}
-                {data.onResendNotification && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => data.onResendNotification!(order.id)}
-                    disabled={isButtonLoading(order.id, 'resend_notification')}
-                    className="w-full flex items-center justify-center space-x-1 text-xs border-primary/30 text-primary hover:bg-primary/5"
-                  >
-                    {isButtonLoading(order.id, 'resend_notification') ? (
-                      <>
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Sending...</span>
-                      </>
-                    ) : (
-                      <>
-                        <MessageSquare className="h-3 w-3" />
-                        <span>Resend WhatsApp</span>
-                      </>
-                    )}
-                  </Button>
+                {/* Row 2.5: WhatsApp Actions — API resend + always-free wa.me.
+                    Free uses the same bill template as auto-send and adapts
+                    to stage (Bill → Ready → Picked-up) via smart mode. */}
+                {data.onResendNotification ? (
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => data.onResendNotification!(order.id)}
+                      disabled={isButtonLoading(order.id, 'resend_notification')}
+                      className="flex items-center justify-center space-x-1 text-xs border-primary/30 text-primary hover:bg-primary/5"
+                    >
+                      {isButtonLoading(order.id, 'resend_notification') ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Sending...</span>
+                        </>
+                      ) : (
+                        <>
+                          <MessageSquare className="h-3 w-3" />
+                          <span>Resend WA</span>
+                        </>
+                      )}
+                    </Button>
+                    <OrderFreeWaButton order={order} kind="smart" />
+                  </div>
+                ) : (
+                  <OrderFreeWaButton order={order} kind="smart" fullWidth />
+                )}
+
+                {/* Row 2.6: stage-specific free nudges — washing update while
+                    in progress, payment receipt while unpaid. Zero setup. */}
+                {order.execution_status === 'in_progress' && (
+                  <OrderFreeWaButton order={order} kind="washing" fullWidth />
+                )}
+                {(order.payment_status === 'pending' || order.payment_status === 'down_payment') && (
+                  <OrderFreeWaButton order={order} kind="payment" fullWidth />
                 )}
 
                 {/* Row 3: Status Action */}
@@ -380,7 +397,8 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onExportReceiptPDF,
   onResendNotification,
   processingOrderId,
-  processingAction
+  processingAction,
+  hidePaymentActions
 }) => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -411,10 +429,10 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     hidePaymentActions,
   };
 
-  // Responsive item size - accounts for all action buttons including WhatsApp resend
-  // Mobile: 460px to prevent button overlap on small screens
-  // Desktop: 410px provides adequate spacing for all buttons
-  const itemSize = isMobile ? 460 : 410;
+  // Responsive item size - accounts for all action buttons including WhatsApp free
+  // Mobile: 540px to prevent button overlap on small screens
+  // Desktop: 480px provides adequate spacing for all buttons
+  const itemSize = isMobile ? 540 : 480;
 
   return (
     <List

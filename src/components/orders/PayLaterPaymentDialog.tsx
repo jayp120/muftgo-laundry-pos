@@ -15,6 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Banknote, QrCode, Smartphone, Gift, Percent } from 'lucide-react';
 import { useCustomerPoints } from '@/hooks/useCustomerPoints';
 import { useStore } from '@/contexts/StoreContext';
+import { SendViaWhatsAppFree } from '@/components/whatsapp/SendViaWhatsAppFree';
+import { getFreeStoreInfo } from '@/lib/whatsapp-free';
+import { messageTemplates } from '@/integrations/whatsapp/templates';
 
 // Points to currency conversion rate (1 point = ₹100)
 export const POINTS_TO_CURRENCY_RATE = 100;
@@ -177,6 +180,21 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
     }
     return true;
   };
+
+  // Free preview — payment confirmation text, ready to send from staff's own WhatsApp.
+  const freePaymentPreview = (() => {
+    try {
+      const storeInfo = getFreeStoreInfo(currentStore);
+      return messageTemplates.paymentConfirmation({
+        orderId,
+        customerName,
+        paymentStatus: 'completed',
+        storeInfo,
+      });
+    } catch {
+      return null;
+    }
+  })();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -378,17 +396,27 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
             )}
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!isSubmitValid() || isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isSubmitting ? 'Processing...' : 'Confirm Payment'}
-            </Button>
+          <DialogFooter className="gap-2 flex-col sm:flex-col">
+            {freePaymentPreview && customerPhone && (
+              <SendViaWhatsAppFree
+                to={customerPhone}
+                message={freePaymentPreview}
+                label="Preview Payment Msg (Free)"
+                fullWidth
+              />
+            )}
+            <div className="flex gap-2 w-full">
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1">
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!isSubmitValid() || isSubmitting}
+                className="bg-green-600 hover:bg-green-700 flex-1"
+              >
+                {isSubmitting ? 'Processing...' : 'Confirm Payment'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

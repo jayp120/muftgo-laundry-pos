@@ -69,6 +69,8 @@ import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 import { EditCustomerDialog } from '@/components/pos/EditCustomerDialog';
 import { CustomerPointsCard } from '@/components/customers/CustomerPointsCard';
 import { CustomerPointsBadge } from '@/components/customers/CustomerPointsBadge';
+import { SendViaWhatsAppFree } from '@/components/whatsapp/SendViaWhatsAppFree';
+import { freeGreetingMessage, freePromoMessage, getFreeStoreInfo } from '@/lib/whatsapp-free';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -628,6 +630,22 @@ export const CustomersPage: React.FC = () => {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                }}
+                                asChild
+                              >
+                                <a
+                                  href={`https://wa.me/${(customer.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${customer.name}! 👋 This is a message from our laundry store.`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Phone className="h-4 w-4 mr-2" />
+                                  WhatsApp (Free)
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleDeleteClick(customer);
                                 }}
                                 className="text-destructive"
@@ -710,6 +728,30 @@ export const CustomersPage: React.FC = () => {
                 showTransactions={false}
                 compact={true}
               />
+
+              {/* Free WhatsApp — zero setup greeting + festival offer */}
+              {(() => {
+                const storeInfo = getFreeStoreInfo(currentStore);
+                return (
+                  <div className="grid grid-cols-1 gap-2">
+                    <SendViaWhatsAppFree
+                      to={selectedCustomer.phone}
+                      message={freeGreetingMessage(selectedCustomer.name, storeInfo)}
+                      label="Say Hello (Free)"
+                      fullWidth
+                    />
+                    <SendViaWhatsAppFree
+                      to={selectedCustomer.phone}
+                      message={freePromoMessage(
+                        selectedCustomer.name,
+                        `Fresh & clean festive offer at ${storeInfo.name}! Get your clothes washed and ironed — visit us today. ${storeInfo.address}`
+                      )}
+                      label="Send Offer (Free)"
+                      fullWidth
+                    />
+                  </div>
+                );
+              })()}
 
               <div className="flex gap-2 pt-4 border-t">
                 <Button 

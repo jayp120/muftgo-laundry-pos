@@ -47,6 +47,10 @@ export const EnhancedLaundryPOS = () => {
     pointstsEarned?: number;
     pointstsRedeemed?: number;
     discountAmount?: number;
+    subtotal?: number;
+    paymentStatus?: string;
+    estimatedCompletion?: string;
+    orderItems?: any[];
   } | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [pointsRedeemed, setPointsRedeemed] = useState(0);
@@ -550,7 +554,12 @@ export const EnhancedLaundryPOS = () => {
       setShowCashPaymentDialog(false);
       
       // Show order success dialog
-      showOrderSuccess(createdOrder, totalAmount, paymentStatus === 'down_payment' ? 'cash_dp' : 'cash');
+      showOrderSuccess(createdOrder, totalAmount, paymentStatus === 'down_payment' ? 'cash_dp' : 'cash', {
+        subtotal,
+        paymentStatus,
+        estimatedCompletion: completionDate?.toISOString(),
+        orderItems: items,
+      });
     } catch (error) {
       // Error is already handled in the hook
       setShowCashPaymentDialog(false);
@@ -595,7 +604,12 @@ export const EnhancedLaundryPOS = () => {
       const createdOrder = await submitOrder(orderData);
 
       // Show order success dialog
-      showOrderSuccess(createdOrder, totalAmount, mappedMethod);
+      showOrderSuccess(createdOrder, totalAmount, mappedMethod, {
+        subtotal,
+        paymentStatus: 'completed',
+        estimatedCompletion: completionDate?.toISOString(),
+        orderItems: items,
+      });
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -642,14 +656,26 @@ export const EnhancedLaundryPOS = () => {
       const createdOrder = await submitOrder(orderData);
 
       // Show order success dialog for draft order (same as paid orders)
-      showOrderSuccess(createdOrder, totalAmount, 'pending');
+      showOrderSuccess(createdOrder, totalAmount, 'pending', {
+        subtotal,
+        paymentStatus: 'pending',
+        estimatedCompletion: completionDate?.toISOString(),
+        orderItems: items,
+      });
     } catch (error) {
       // Error is already handled in the hook
     }
   };
 
   // Helper function to store order info and show success dialog
-  const showOrderSuccess = (createdOrder: any, totalAmount: number, paymentMethod: string) => {
+  // Snapshot includes full bill context so the Free wa.me button can use
+  // the identical full template as auto-send (items + ETA + payment status).
+  const showOrderSuccess = (
+    createdOrder: any,
+    totalAmount: number,
+    paymentMethod: string,
+    snapshot?: { subtotal?: number; paymentStatus?: string; estimatedCompletion?: string; orderItems?: any[] }
+  ) => {
     // Store order info for success dialog (include phone for free wa.me fallback)
     const snapshotPhone = (customerPhone || '').replace(/\D/g, '').slice(-10);
     const snapshotName = (customerName || '').trim();
@@ -664,6 +690,10 @@ export const EnhancedLaundryPOS = () => {
       pointstsEarned: createdOrder.points_earned || 0,
       pointstsRedeemed: pointstsRedeemed > 0 ? pointstsRedeemed : undefined,
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
+      subtotal: snapshot?.subtotal,
+      paymentStatus: snapshot?.paymentStatus,
+      estimatedCompletion: snapshot?.estimatedCompletion,
+      orderItems: snapshot?.orderItems,
     } as any);
 
     // Show toast notification for pointsts earned if applicable
@@ -1125,6 +1155,10 @@ export const EnhancedLaundryPOS = () => {
           pointstsEarned={lastCreatedOrder.pointsEarned}
           pointstsRedeemed={lastCreatedOrder.pointsRedeemed}
           discountAmount={lastCreatedOrder.discountAmount}
+          subtotal={(lastCreatedOrder as any).subtotal}
+          paymentStatus={(lastCreatedOrder as any).paymentStatus}
+          estimatedCompletion={(lastCreatedOrder as any).estimatedCompletion}
+          orderItems={(lastCreatedOrder as any).orderItems}
           onPrintReceipt={handlePrintReceipt}
           onNewTransaction={handleNewTransaction}
         />

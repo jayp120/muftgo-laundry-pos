@@ -29,6 +29,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { SendViaWhatsAppFree } from '@/components/whatsapp/SendViaWhatsAppFree';
 
 interface Customer {
   id: string;
@@ -273,17 +274,18 @@ export const WhatsAppBroadcastPage: React.FC = () => {
         </div>
       </div>
 
-      {/* WhatsApp Configuration Warning */}
+      {/* WhatsApp Configuration Warning — Free mode always works */}
       {!isConfigured && (
-        <Card className="border-pos-warning/40 bg-pos-warning/10">
+        <Card className="border-green-600/40 bg-green-50">
           <CardContent className="pt-6">
             <div className="flex items-start space-x-3">
-              <AlertCircle className="h-5 w-5 text-pos-warning mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-green-700 mt-0.5" />
               <div>
-                <h3 className="font-medium text-pos-warning">WhatsApp Not Configured</h3>
-                <p className="text-sm text-pos-warning/80 mt-1">
-                  WhatsApp service is not properly configured. Messages will not be sent.
-                  Please check your environment variables.
+                <h3 className="font-medium text-green-800">Auto-send not configured — Free mode ready</h3>
+                <p className="text-sm text-green-700/80 mt-1">
+                  Auto broadcast needs the WhatsApp gateway. Meanwhile every row below has a
+                  Free button that opens your own WhatsApp with the same text — zero setup, zero cost.
+                  Tap each customer one by one (WhatsApp blocks bulk auto-clicks).
                 </p>
               </div>
             </div>
@@ -356,6 +358,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                         <TableHead>Name</TableHead>
                         <TableHead>Phone</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead className="text-right">Free</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -373,6 +376,17 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                           <TableCell className="font-medium">{customer.name}</TableCell>
                           <TableCell>{customer.phone}</TableCell>
                           <TableCell className="text-muted-foreground">{customer.email || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            <SendViaWhatsAppFree
+                              to={customer.phone}
+                              message={
+                                message.trim()
+                                  ? replaceMessageVariables(message, customer)
+                                  : `Hello ${customer.name}! 👋 This is a message from our laundry store.`
+                              }
+                              label="Free"
+                            />
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -452,10 +466,36 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Send to {selectedCustomerIds.size} Customer{selectedCustomerIds.size !== 1 ? 's' : ''}
+                    Send to {selectedCustomerIds.size} Customer{selectedCustomerIds.size !== 1 ? 's' : ''} (Auto)
                   </>
                 )}
               </Button>
+
+              {/* Free bulk helper — opens the first selected chat with text ready.
+                  WhatsApp has no bulk-send URL, so staff taps through one by one. */}
+              {selectedCustomerIds.size > 0 && message.trim() && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground text-center">
+                    No gateway? Use Free — tap each name, press Send in WhatsApp.
+                  </p>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {selectedCustomers.slice(0, 10).map((c) => (
+                      <SendViaWhatsAppFree
+                        key={c.id}
+                        to={c.phone}
+                        message={replaceMessageVariables(message, c)}
+                        label={`Free → ${c.name}`}
+                        fullWidth
+                      />
+                    ))}
+                    {selectedCustomers.length > 10 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        + {selectedCustomers.length - 10} more — use per-row Free buttons above.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

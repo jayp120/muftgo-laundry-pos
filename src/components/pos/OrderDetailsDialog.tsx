@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatDateLong, isDateOverdue } from '@/lib/utils';
 import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
+import { OrderFreeWaButton, SendViaWhatsAppFree } from '@/components/whatsapp/SendViaWhatsAppFree';
+import { freeReminderMessage } from '@/lib/whatsapp-free';
 
 interface OrderDetailsDialogProps {
   order: any;
@@ -54,6 +56,17 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
   };
 
   if (!order) return null;
+
+  const overdueDays = (() => {
+    try {
+      if (!order.estimated_completion) return 0;
+      const diff = Date.now() - new Date(order.estimated_completion).getTime();
+      return diff > 0 ? Math.floor(diff / (1000 * 60 * 60 * 24)) : 0;
+    } catch {
+      return 0;
+    }
+  })();
+  const showReminder = isOrderOverdue(order) && overdueDays > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -250,6 +263,37 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Free WhatsApp actions — zero setup, works even when auto-send is off.
+              One tap opens staff's own WhatsApp with the exact stage text. */}
+          <Separator />
+          <div className="space-y-2">
+            <h3 className="font-semibold text-base sm:text-lg">WhatsApp (Free — no setup)</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <OrderFreeWaButton order={order} kind="created" fullWidth />
+              <OrderFreeWaButton order={order} kind="washing" fullWidth />
+              <OrderFreeWaButton order={order} kind="ready" fullWidth />
+              <OrderFreeWaButton order={order} kind="completed" fullWidth />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <OrderFreeWaButton order={order} kind="payment" fullWidth />
+              {showReminder && (
+                <SendViaWhatsAppFree
+                  to={order.customer_phone}
+                  message={freeReminderMessage(
+                    order.customer_name || 'Customer',
+                    (order.id || '').slice(-8).toUpperCase(),
+                    overdueDays
+                  )}
+                  label={`Reminder — ${overdueDays}d overdue (Free)`}
+                  fullWidth
+                />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Free buttons open WhatsApp with the message ready — just press Send. No API, no cost.
+            </p>
           </div>
 
           <Separator />

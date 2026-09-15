@@ -24,6 +24,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { usePendingOrders } from '@/hooks/useOfflineOrderQueue';
 import { retryOfflineOrderNow } from '@/hooks/useOfflineOrderSync';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
+import { OrderFreeWaButton } from '@/components/whatsapp/SendViaWhatsAppFree';
 import { useAuth } from '@/contexts/AuthContext';
 import { canCollectPayments } from '@/lib/permissions';
 import { toast } from 'sonner';
@@ -765,7 +766,7 @@ export const OrderHistory = () => {
                     };
                     return (
                       <div key={order.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="truncate font-medium">{order.payload.customer_name}</p>
                           <p className="text-sm text-muted-foreground">
                             ₹{order.payload.total_amount.toLocaleString('en-IN')} · {statusLabel[order.status] || order.status}
@@ -775,6 +776,10 @@ export const OrderHistory = () => {
                               Sync failed at step {order.lastError.step}. Contact admin if this keeps happening.
                             </p>
                           )}
+                          {/* Free bill works even before sync — uses queued payload + store. */}
+                          <div className="mt-2">
+                            <OrderFreeWaButton order={{ payload: order.payload, id: order.id }} kind="created" />
+                          </div>
                         </div>
                         {(order.status === 'error_permanent' || order.status === 'error_retryable') && (
                           <Button
