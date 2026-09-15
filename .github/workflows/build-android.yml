@@ -80,7 +80,14 @@ jobs:
           java-version: '21'
 
       - name: Set up Android SDK
+        # android-actions/setup-android@v3 defaults to `packages: tools platform-tools`,
+        # but Google removed the obsolete `tools` package from the SDK repository -
+        # sdkmanager exits 1 ("Failed to find package 'tools'") on current runner
+        # images, failing every run before Gradle ever starts (web build itself is
+        # fine). Install only what Capacitor 7 (compileSdk 35) actually needs.
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
