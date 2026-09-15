@@ -31,6 +31,15 @@ export const EnhancedLaundryPOS = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
+  // Dedicated search-box text, decoupled from the Mobile/Name fields. The old
+  // design typed search input straight into customerPhone (so the Mobile field
+  // mirrored the query, names got wiped, and same-name matches were confusing).
+  const [searchText, setSearchText] = useState('');
+  // Id of the picked customer record. Cleared by any manual edit, so the
+  // duplicate-check never overwrites a correction the user just typed.
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  // Owner-only hint rows when the customer exists, but under another store.
+  const [otherStoreMatches, setOtherStoreMatches] = useState<any[]>([]);
   // True when the current query was searched and matched nobody - the order
   // submit auto-creates the customer, so this badge is the whole "add" UI.
   const [isNewCustomer, setIsNewCustomer] = useState(false);
@@ -62,9 +71,9 @@ export const EnhancedLaundryPOS = () => {
   const [offlineReceiptData, setOfflineReceiptData] = useState<LocalReceiptData | null>(null);
 
   const navigate = useNavigate();
-  const { searchCustomers, getCustomerByPhone, addCustomer, loading: customersLoading } = useCustomers();
+  const { searchCustomers, findCustomersInOtherStores, getCustomerByPhone, addCustomer, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
-  const { currentStore } = useStore();
+  const { currentStore, isOwner } = useStore();
   const isOnline = useOnlineStatus();
   const pendingOfflineOrders = usePendingOrders(currentStore?.store_id);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -74,6 +83,9 @@ export const EnhancedLaundryPOS = () => {
   // Monotonic id so slow earlier searches can't overwrite newer results
   // (the "dropdown comes and goes" flicker when typing fast).
   const searchSeqRef = useRef(0);
+  // Last mobile number the duplicate-check already resolved (found or new),
+  // so typing a name correction afterwards doesn't re-trigger it.
+  const checkedPhoneRef = useRef('');
 
   // Queues an order locally to sync automatically once connectivity
   // returns. Points redemption is never part of the offline path (see docs
@@ -245,35 +257,38 @@ export const EnhancedLaundryPOS = () => {
     return longestDate;
   };
 
-  // Search for customers when phone/name changes - matches EITHER field.
+  // Search runs ONLY on the dedicated Search box (searchText). The Mobile and
+  // Name fields are the billing record, not the query - typing "jay" or a
+  // partial number in Search matches against BOTH columns server-side, so
+  // every same-name customer appears with its phone for disambiguation.
   // This effect is the SOLE writer of searchResults: results are taken from
   // the search call's own return value (not the shared `customers` state),
-  // and stale responses are dropped via searchSeqRef. The old design copied
-  // from shared state in a second effect while this one cleared it - the two
-  // fought and the dropdown flickered ("comes and goes") while typing, and a
-  // slow earlier request could overwrite newer results.
+  // and stale responses are dropped via searchSeqRef.
   useEffect(() => {
     const mySeq = ++searchSeqRef.current;
     const searchCustomer = async () => {
       // A newer keystroke already superseded this run.
       if (mySeq !== searchSeqRef.current) return;
-      const phoneQ = (customerPhone || '').trim();
-      const nameQ = (customerName || '').trim();
-      // Don't search while selecting, or when both fields already complete
-      const isFormFilled = phoneQ.length >= 3 && nameQ.length > 0;
-      // Smart query: prefer the phone field, but fall back to the name field
-      // so typing only a name ("jay") still finds existing customers. The API
-      // matches the query against BOTH the name and phone columns, so a phone
-      // typed into the name field still resolves too.
-      const q = phoneQ.length >= 2 ? phoneQ : nameQ.length >= 2 ? nameQ : '';
+      const q = (searchText || '').trim();
 
-      if (q && !isSelectingCustomer && !isFormFilled) {
+      if (q.length >= 2 && !isSelectingCustomer) {
         try {
           const results = await searchCustomers(q);
           if (mySeq !== searchSeqRef.current) return;
           setSearchResults(results ?? []);
-          setIsNewCustomer((results ?? []).length === 0);
           setShowResults(true);
+          if (!selectedCustomerId) {
+            setIsNewCustomer((results ?? []).length === 0);
+          }
+          // Owner-only cross-store hint: nothing in THIS store, but the
+          // number/name lives under another store (wrong store switched).
+          if ((results ?? []).length === 0 && isOwner) {
+            const others = await findCustomersInOtherStores(q);
+            if (mySeq !== searchSeqRef.current) return;
+            setOtherStoreMatches(others);
+          } else {
+            setOtherStoreMatches([]);
+          }
         } catch {
           // searchCustomers already handles fallback - never blank the UI
           if (mySeq === searchSeqRef.current) {
@@ -282,11 +297,11 @@ export const EnhancedLaundryPOS = () => {
         }
       } else if (!isSelectingCustomer) {
         setSearchResults([]);
+        setOtherStoreMatches([]);
         setShowResults(false);
-        // Keep the "New" badge when the form just became complete (user
-        // finished typing a new customer's details); clear it only when
-        // both fields were shortened/cleared.
-        if (phoneQ.length < 2 && nameQ.length < 2) {
+        // Keep the "New" badge while a picked/partial customer is on screen;
+        // clear it only when the search box itself was shortened/cleared.
+        if (q.length < 2 && !selectedCustomerId) {
           setIsNewCustomer(false);
         }
       }
@@ -294,7 +309,47 @@ export const EnhancedLaundryPOS = () => {
 
     const debounceTimer = setTimeout(searchCustomer, 300);
     return () => clearTimeout(debounceTimer);
-  }, [customerPhone, customerName, searchCustomers, isSelectingCustomer]);
+  }, [searchText, searchCustomers, findCustomersInOtherStores, isSelectingCustomer, isOwner, selectedCustomerId, currentStore?.store_id]);
+
+  // Live duplicate validation on the Mobile field: the moment a full 10-digit
+  // number is entered, check this store for it. Existing number -> reuse that
+  // record automatically (name fills in, no duplicate possible). Unknown
+  // number -> flag as new. Skipped while a pick is in flight, when a record
+  // is already selected, and for numbers already resolved (so correcting the
+  // name afterwards doesn't snap it back or spam toasts).
+  useEffect(() => {
+    const digits = (customerPhone || '').replace(/\D/g, '').slice(-10);
+    if (digits.length !== 10 || isSelectingCustomer || selectedCustomerId) return;
+    if (checkedPhoneRef.current === digits) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const found = await getCustomerByPhone(digits).catch(() => null);
+      if (cancelled) return;
+      checkedPhoneRef.current = digits;
+      if (found) {
+        searchSeqRef.current++;
+        setIsSelectingCustomer(true);
+        setSelectedCustomerId(found.id);
+        setCustomerPhone(found.phone);
+        setCustomerName(found.name);
+        setSearchText('');
+        setSearchResults([]);
+        setOtherStoreMatches([]);
+        setShowResults(false);
+        setIsNewCustomer(false);
+        toast.success(`Customer found: ${found.name} - using existing record`);
+        setTimeout(() => {
+          if (!cancelled) setIsSelectingCustomer(false);
+        }, 500);
+      } else {
+        setIsNewCustomer(true);
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [customerPhone, isSelectingCustomer, selectedCustomerId, getCustomerByPhone]);
 
   // Auto-expand the service section the moment customer info becomes
   // complete, and collapse it again if the form is cleared. Only reacts to
@@ -310,8 +365,11 @@ export const EnhancedLaundryPOS = () => {
     // Invalidate any in-flight search so it can't reopen/replace the dropdown.
     searchSeqRef.current++;
     setIsSelectingCustomer(true);
+    setSelectedCustomerId(customer.id);
     setShowResults(false);
     setSearchResults([]);
+    setOtherStoreMatches([]);
+    setSearchText('');
     setIsNewCustomer(false);
     setCustomerPhone(customer.phone);
     setCustomerName(customer.name);
@@ -321,25 +379,39 @@ export const EnhancedLaundryPOS = () => {
     }, 500);
   };
 
-  // Fast inline "add new customer": no dialog, no page switch. Just splits
-  // the typed text into phone/name, focuses the missing field, and lets the
-  // order submit auto-create the customer (ensureCustomerExists). This is the
-  // answer to "where to add new customer inline".
-  const handleAddNewCustomerFast = () => {
-    searchSeqRef.current++;
-    const typed = (customerPhone || '').trim();
+  // Fast inline "add new customer": duplicate-guarded. If the typed phone
+  // already exists in this store, the existing record is picked instead of
+  // creating a second "jay" - same-name customers stay distinguishable by
+  // phone and never double up. Otherwise splits the typed text into
+  // phone/name, focuses the missing field, and lets the order submit
+  // auto-create the customer (ensureCustomerExists).
+  const handleAddNewCustomerFast = async () => {
+    const typed = ((searchText || customerPhone) || '').trim();
     const digits = typed.replace(/\D/g, '');
+    if (digits.length >= 6) {
+      const found = await getCustomerByPhone(digits).catch(() => null);
+      if (found) {
+        handleCustomerSelect(found);
+        toast.success(`Customer already exists: ${found.name} (${found.phone}) - using existing record`);
+        return;
+      }
+    }
+    searchSeqRef.current++;
     setShowResults(false);
     setSearchResults([]);
+    setOtherStoreMatches([]);
+    setSelectedCustomerId(null);
     setIsNewCustomer(true);
     if (digits.length >= 6) {
       // Typed digits - keep as phone, jump to name field.
       setCustomerPhone(digits.slice(-13));
+      setSearchText('');
       requestAnimationFrame(() => nameInputRef.current?.focus());
       toast.info(`New customer - enter name for ${digits.slice(-10)}`);
     } else {
       // Typed a name - keep as name, jump to mobile field.
       if (typed) setCustomerName(typed);
+      setSearchText('');
       setCustomerPhone('');
       requestAnimationFrame(() => phoneInputRef.current?.focus());
       toast.info('New customer - enter 10-digit mobile number');
@@ -350,9 +422,13 @@ export const EnhancedLaundryPOS = () => {
   // being built up for the customer that's now being cleared.
   const clearCustomerForm = () => {
     searchSeqRef.current++;
+    checkedPhoneRef.current = '';
     setCustomerPhone('');
     setCustomerName('');
+    setSearchText('');
+    setSelectedCustomerId(null);
     setSearchResults([]);
+    setOtherStoreMatches([]);
     setShowResults(false);
     setIsNewCustomer(false);
     setDropOffDate(getJakartaNow());
@@ -745,6 +821,10 @@ export const EnhancedLaundryPOS = () => {
     // Clear customer information for new transaction
     setCustomerName('');
     setCustomerPhone('');
+    setSearchText('');
+    setSelectedCustomerId(null);
+    setOtherStoreMatches([]);
+    checkedPhoneRef.current = '';
     
     // Reset last created order
     setLastCreatedOrder(null);
@@ -760,6 +840,10 @@ export const EnhancedLaundryPOS = () => {
     // Clear customer info when closing dialog
     setCustomerName('');
     setCustomerPhone('');
+    setSearchText('');
+    setSelectedCustomerId(null);
+    setOtherStoreMatches([]);
+    checkedPhoneRef.current = '';
     setLastCreatedOrder(null);
     setOfflineReceiptData(null);
   };
@@ -909,20 +993,17 @@ export const EnhancedLaundryPOS = () => {
                 )}
                 <Input
                   placeholder="Type mobile number or name to search"
-                  value={customerPhone}
+                  value={searchText}
                   onChange={(e) => {
-                    const newValue = e.target.value;
-                    setCustomerPhone(newValue);
-
-                    if (customerName.trim().length > 0 && newValue !== customerPhone) {
-                      setCustomerName('');
-                    }
+                    setSearchText(e.target.value);
+                    // Manual typing drops the picked record so the
+                    // duplicate-check re-validates instead of trusting it.
+                    if (selectedCustomerId) setSelectedCustomerId(null);
                   }}
                   onBlur={handlePhoneInputBlur}
                   onFocus={() => {
-                    const q = (customerPhone || '').trim();
-                    const isFormFilled = q.length >= 3 && customerName.trim().length > 0;
-                    if (!isSelectingCustomer && q.length >= 2 && !isFormFilled && (searchResults.length > 0 || q.length >= 2)) {
+                    const q = (searchText || '').trim();
+                    if (!isSelectingCustomer && q.length >= 2) {
                       setShowResults(true);
                     }
                   }}
@@ -933,7 +1014,7 @@ export const EnhancedLaundryPOS = () => {
                       e.preventDefault();
                       if (searchResults.length === 1) {
                         handleCustomerSelect(searchResults[0]);
-                      } else if (searchResults.length === 0 && (customerPhone || '').trim().length >= 2) {
+                      } else if (searchResults.length === 0 && (searchText || '').trim().length >= 2) {
                         handleAddNewCustomerFast();
                       }
                     } else if (e.key === 'ArrowDown' && searchResults.length > 0) {
@@ -968,7 +1049,22 @@ export const EnhancedLaundryPOS = () => {
                         <div className="text-sm text-muted-foreground">+91 {customer.phone?.slice(-10)}</div>
                       </div>
                     ))}
-                    {!customersLoading && searchResults.length === 0 && (customerPhone || '').trim().length >= 2 && (
+                    {!customersLoading && searchResults.length === 0 && otherStoreMatches.length > 0 && (
+                      <div className="p-3 bg-pos-warning/10 border-b">
+                        <p className="text-xs font-medium text-pos-warning mb-1">
+                          Not in {currentStore?.store_name || 'this store'} - found elsewhere:
+                        </p>
+                        {otherStoreMatches.map((m) => (
+                          <p key={m.id} className="text-xs text-muted-foreground">
+                            {m.name} • +91 {m.phone?.slice(-10)} • in <span className="font-medium">{m.store_name}</span>
+                          </p>
+                        ))}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Switch store (top header) to bill them, or add as new here.
+                        </p>
+                      </div>
+                    )}
+                    {!customersLoading && searchResults.length === 0 && (searchText || '').trim().length >= 2 && (
                       <div
                         className="p-3 hover:bg-secondary cursor-pointer flex items-center gap-2 text-primary font-medium focus:bg-secondary focus:outline-none"
                         tabIndex={0}
@@ -982,7 +1078,7 @@ export const EnhancedLaundryPOS = () => {
                         }}
                       >
                         <Plus className="h-4 w-4" />
-                        Add as new customer: “{(customerPhone || '').trim()}”
+                        Add as new customer: “{(searchText || '').trim()}”
                       </div>
                     )}
                   </div>
@@ -1004,6 +1100,9 @@ export const EnhancedLaundryPOS = () => {
                     onChange={(e) => {
                       const v = e.target.value.replace(/[^\d+ ]/g, '').slice(0, 13);
                       setCustomerPhone(v);
+                      // Manual edit drops the picked record so the
+                      // duplicate-check re-validates the new number.
+                      if (selectedCustomerId) setSelectedCustomerId(null);
                       if (customerName.trim().length > 0 && v !== customerPhone) {
                         // keep name if user is correcting phone for new customer
                       }
@@ -1018,7 +1117,10 @@ export const EnhancedLaundryPOS = () => {
                     placeholder="Enter full name, e.g. Jay Pathade"
                     ref={nameInputRef}
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value);
+                      if (selectedCustomerId) setSelectedCustomerId(null);
+                    }}
                   />
                 </div>
               </div>

@@ -32,7 +32,7 @@ const sanitizeLikeQuery = (s: string): string => {
 export const useCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
-  const { currentStore } = useStore();
+  const { currentStore, isOwner } = useStore();
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
 
@@ -234,8 +234,44 @@ export const useCustomers = () => {
     }
   };
 
-  const getAllCustomers = async () => {
-    if (!currentStore) {
+  // Owner-only cross-store lookup: when the current store has no match, check
+  // whether the customer exists under ANOTHER store (owner billing while the
+  // header is switched to the wrong shop is the classic "search finds
+  // nothing" mystery). Staff are locked to one store, so this stays empty
+  // for them - no cross-store data leaks to counter staff.
+  const findCustomersInOtherStores = async (
+    query: string
+  ): Promise<Array<Customer & { store_name: string }>> => {
+    if (!isOwner || !currentStore) return [];
+    const clean = sanitizeLikeQuery(query);
+    if (!clean || clean.length < 2) return [];
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id,name,phone,store_id')
+        .neq('store_id', currentStore.store_id)
+        .or(`name.ilike.%${clean}%,phone.ilike.%${clean}%`)
+        .limit(5);
+
+      if (error || !data || data.length === 0) return [];
+
+      const storeIds = [...new Set(data.map((d: any) => d.store_id))];
+      const { data: stores } = await supabase
+        .from('stores')
+        .select('id,name')
+        .in('id', storeIds);
+      const names = new Map((stores || []).map((s: any) => [s.id, s.name]));
+
+      return data.map((d: any) => ({
+        ...d,
+        store_name: names.get(d.store_id) || 'another store',
+      }));
+    } catch {
+      return [];
+    }
+  };
+
+  const getAllCustomers = async () => {    if (!currentStore) {
       toast({
         title: "Error",
         description: "No store selected",
@@ -270,6 +306,7 @@ export const useCustomers = () => {
     customers,
     loading,
     searchCustomers,
+    findCustomersInOtherStores,
     addCustomer,
     getCustomerByPhone,
     getAllCustomers,
